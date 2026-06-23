@@ -1,69 +1,98 @@
-from typing import Any
+from typing import Annotated, TypedDict
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from core.operations import get_db
-from core.db import HVACAnalysisResponse, HVACSubmissionResponse, WaterHeaterAnalysisResponse, WaterHeaterSubmissionResponse
+from core.schema import (
+    HVACAnalysis,
+    HVACSubmission,
+    WaterHeaterAnalysis,
+    WaterHeaterSubmission,
+)
+
+DbSession = Annotated[Session, Depends(get_db)]
 
 dashboard_router = APIRouter(
     prefix="/dashboard",
-    tags=["Dashboard"]
+    tags=["Dashboard"],
 )
 
 
+class DashboardRow(TypedDict):
+    id: str
+    appliance_type: str
+    address: str
+    appliance_number: int
+    nameplate_photo: str
+    brand: str | None
+    model_number: str | None
+    serial_number: str | None
+    age: int | None
+    replacement_recommendation: str | None
+    subtype: str | None
+
+
 @dashboard_router.get("/")
-def get_dashboard(db: Session = Depends(get_db)) -> list[Any]:
+def get_dashboard(db: DbSession) -> list[DashboardRow]:
     """_summary_
 
     Args:
-        db (Session, optional): _description_. Defaults to Depends(get_db).
+        db (DbSession): _description_
 
     Returns:
-        list[Any]: _description_
+        list[DashboardRow]: _description_
     """
-    hvac_submissions: List[Any] = db.query(HVACSubmissionResponse).all()
-    wh_submissions: List[Any] = db.query(WaterHeaterSubmissionResponse).all()
+    hvac_submissions = db.query(HVACSubmission).all()
+    wh_submissions = db.query(WaterHeaterSubmission).all()
 
-    hvac_analysis = db.query(HVACAnalysisResponse).all()
-    wh_analysis = db.query(WaterHeaterAnalysisResponse).all()
+    hvac_analysis = db.query(HVACAnalysis).all()
+    wh_analysis = db.query(WaterHeaterAnalysis).all()
 
-    hvac_map: dict[Any, Any] = {a.submission_id: a for a in hvac_analysis}
-    wh_map: dict[Any, Any] = {a.submission_id: a for a in wh_analysis}
+    hvac_map: dict[str, HVACAnalysis] = {
+        analysis.submission_id: analysis
+        for analysis in hvac_analysis
+    }
 
-    dashboard: list[Any] = []
+    wh_map: dict[str, WaterHeaterAnalysis] = {
+        analysis.submission_id: analysis
+        for analysis in wh_analysis
+    }
 
-    for s in hvac_submissions:
-        a: Any | None = hvac_map.get(s.id)
+    dashboard: list[DashboardRow] = []
+
+    for submission in hvac_submissions:
+        analysis = hvac_map.get(submission.id)
 
         dashboard.append({
-            "id": s.id,
+            "id": submission.id,
             "appliance_type": "HVAC",
-            "address": s.address,
-            "appliance_number": s.appliance_number,
-            "nameplate_photo": s.nameplate_photo,
-            "brand": a.brand if a else None,
-            "model_number": a.model_number if a else None,
-            "serial_number": a.serial_number if a else None,
-            "age": a.age if a else None,
-            "replacement_recommendation": a.replacement_recommendation if a else None,
-            "subtype": a.subtype if a else None,
+            "address": submission.address,
+            "appliance_number": submission.appliance_number,
+            "nameplate_photo": submission.nameplate_photo,
+            "brand": analysis.brand if analysis else None,
+            "model_number": analysis.model_number if analysis else None,
+            "serial_number": analysis.serial_number if analysis else None,
+            "age": analysis.age if analysis else None,
+            "replacement_recommendation": analysis.replacement_recommendation if analysis else None,
+            "subtype": analysis.subtype if analysis else None,
         })
 
-    for s in wh_submissions:
-        a: Any | None: Any | None = wh_map.get(s.id)
+    for submission in wh_submissions:
+        analysis = wh_map.get(submission.id)
 
         dashboard.append({
-            "id": s.id,
+            "id": submission.id,
             "appliance_type": "Water Heater",
-            "address": s.address,
-            "appliance_number": s.appliance_number,
-            "nameplate_photo": s.nameplate_photo,
-            "brand": a.brand if a else None,
-            "model_number": a.model_number if a else None,
-            "serial_number": a.serial_number if a else None,
-            "age": a.age if a else None,
-            "replacement_recommendation": a.replacement_recommendation if a else None,
-            "subtype": a.subtype if a else None,
+            "address": submission.address,
+            "appliance_number": submission.appliance_number,
+            "nameplate_photo": submission.nameplate_photo,
+            "brand": analysis.brand if analysis else None,
+            "model_number": analysis.model_number if analysis else None,
+            "serial_number": analysis.serial_number if analysis else None,
+            "age": analysis.age if analysis else None,
+            "replacement_recommendation": analysis.replacement_recommendation if analysis else None,
+            "subtype": analysis.subtype if analysis else None,
         })
 
     return dashboard
