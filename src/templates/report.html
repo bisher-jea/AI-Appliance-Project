@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Report for {{ address }}</title>
+</head>
+<body>
+    <h1>REPORT FOR {{ address }}</h1>
+
+    {% for appliance in appliances %}
+        <div>
+            <p>Appliance Type: {{ appliance.subtype or appliance.appliance_type }}</p>
+            <p>Brand: {{ appliance.brand }}</p>
+            <p>Model No: {{ appliance.model_number }}</p>
+            <p>Serial No: {{ appliance.serial_number }}</p>
+            <p>Age: {{ appliance.age }} years</p>
+            <p>RECOMMENDATION: {{ appliance.replacement_recommendation }}</p>
+        </div>
+    {% endfor %}
+</body>
+</html>

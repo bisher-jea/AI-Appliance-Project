@@ -1,8 +1,9 @@
 from typing import Annotated, TypedDict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
+from fastapi.templating import Jinja2Templates
 from core.operations import get_db
 from core.schema import (
     HVACAnalysis,
@@ -12,6 +13,8 @@ from core.schema import (
 )
 
 DbSession = Annotated[Session, Depends(get_db)]
+
+templates = Jinja2Templates(directory="templates")
 
 dashboard_router = APIRouter(
     prefix="/dashboard",
@@ -96,3 +99,26 @@ def get_dashboard(db: DbSession) -> list[DashboardRow]:
         })
 
     return dashboard
+
+
+@dashboard_router.get("/report")
+def get_report_page(
+    request: Request,
+    address: str,
+    db: DbSession
+):
+    all_rows = get_dashboard(db)
+
+    report_rows = [
+        row for row in all_rows
+        if row["address"] == address
+    ]
+
+    return templates.TemplateResponse(
+        "report.html",
+        {
+            "request": request,
+            "address": address,
+            "appliances": report_rows,
+        }
+    )

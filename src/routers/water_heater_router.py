@@ -2,10 +2,11 @@ import os
 import shutil
 from typing import Annotated
 from uuid import uuid4
-
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
+from fastapi.responses import RedirectResponse
+from urllib.parse import quote
 
 from core.operations import get_db
 from core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
@@ -30,7 +31,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 async def submit_water_heater(
     request: Request,
     db: DbSession,
-) -> dict[str, str | int]:
+) -> RedirectResponse:
     """_summary_
 
     Args:
@@ -43,7 +44,7 @@ async def submit_water_heater(
         HTTPException: _description_
 
     Returns:
-        dict[str, str | int]: _description_
+        RedirectResponse: _description_
     """
     form: FormData = await request.form()
 
@@ -113,10 +114,10 @@ async def submit_water_heater(
 
     db.commit()
 
-    return {
-        "message": "Water heater submission saved",
-        "systems_saved": saved_count,
-    }
+    return RedirectResponse(
+        url=f"/dashboard/report?address={quote(address)}",
+        status_code=303,
+    )
 
 
 @water_heater_router.get(

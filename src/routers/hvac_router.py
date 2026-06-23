@@ -2,10 +2,11 @@ import os
 import shutil
 from typing import cast, NotRequired, TypedDict, Annotated
 from uuid import uuid4
-
 from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
+from urllib.parse import quote
 
 from core.operations import get_db
 from core.db import HVACSubmissionResponse, HVACAnalysisResponse
@@ -38,7 +39,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 async def submit_hvac(
     request: Request,
     db: DbSession,
-) -> dict[str, str | int]:
+) -> RedirectResponse:
     """_summary_
 
     Args:
@@ -50,7 +51,7 @@ async def submit_hvac(
         HTTPException: _description_
 
     Returns:
-        dict[str, str | int]: _description_
+        RedirectResponse: _description_
     """
     form: FormData = await request.form()
 
@@ -119,10 +120,10 @@ async def submit_hvac(
 
     db.commit()
 
-    return {
-        "message": "HVAC submission saved",
-        "systems_saved": saved_count,
-    }
+    return RedirectResponse(
+        url=f"/dashboard/report?address={quote(address)}",
+        status_code=303,
+    )
 
 
 @hvac_router.get("", response_model=list[HVACSubmissionResponse],)
