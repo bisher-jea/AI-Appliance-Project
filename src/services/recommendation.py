@@ -7,7 +7,7 @@ class ReplacementRecommendation(BaseModel):
     reason: str
 
 
-def build_recommendation(subtype, age, monitor_age, replace_age) -> ReplacementRecommendation:
+def build_recommendation(subtype: str, age: int | None, monitor_age: int, replace_age: int) -> ReplacementRecommendation:
     """_summary_
 
     Args:
