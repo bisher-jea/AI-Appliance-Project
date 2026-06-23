@@ -1,13 +1,13 @@
-const systemCount = document.getElementById("applianceCount");
-const systemsContainer = document.getElementById("applianceContainer");
+const applianceCount = document.getElementById("applianceCount");
+const applianceContainer = document.getElementById("applianceContainer");
 const machineForm = document.getElementById("machineForm");
 const applianceType = document.getElementById("applianceType");
 
 function createSystemQuestions() {
-    const count = Number(systemCount.value);
+    const count = Number(applianceCount.value);
     const type = applianceType.value;
 
-    systemsContainer.innerHTML = "";
+    applianceContainer.innerHTML = "";
     
     // dynamic questions: shows the following set of questions x amt of times where x is the response to the previous question
     if (!count || count < 1 || !type) {
@@ -63,11 +63,11 @@ function createSystemQuestions() {
             `;
         }
 
-        systemsContainer.appendChild(systemDiv);
+        applianceContainer.appendChild(systemDiv);
     }
 }
 
-systemCount.addEventListener("input", createSystemQuestions);
+applianceCount.addEventListener("input", createSystemQuestions);
 applianceType.addEventListener("change", createSystemQuestions);
 
 machineForm.addEventListener("submit", function(event) {
