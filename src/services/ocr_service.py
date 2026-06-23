@@ -65,6 +65,18 @@ OCR_MODEL = cast(
 
 
 def preprocess_image(image_path: str) -> str:
+    """_summary_
+
+    Args:
+        image_path (str): _description_
+
+    Raises:
+        ValueError: _description_
+        RuntimeError: _description_
+
+    Returns:
+        str: _description_
+    """
     image: MatLike | None = cv2.imread(image_path)
 
     if image is None:
@@ -96,9 +108,17 @@ def preprocess_image(image_path: str) -> str:
 
 
 def run_ocr(image_path: str) -> str:
+    """_summary_
+
+    Args:
+        image_path (str): _description_
+
+    Returns:
+        str: _description_
+    """
     processed_path = preprocess_image(image_path)
 
-    doc: object = DocumentFile.from_images(processed_path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+    doc: object = DocumentFile.from_images(processed_path)  # pyright: ignore[reportUnknownMemberType]
     result = OCR_MODEL(doc)
     exported = cast(OCRExport, result.export())
 
@@ -117,6 +137,14 @@ def run_ocr(image_path: str) -> str:
 
 
 def extract_nameplate_fields(raw_text: str) -> NameplateFields:
+    """_summary_
+
+    Args:
+        raw_text (str): _description_
+
+    Returns:
+        NameplateFields: _description_
+    """
     text = raw_text.upper()
 
     model_patterns = [
@@ -171,6 +199,16 @@ def detect_appliance_type(
     brand: str = "",
     model_number: str = ""
 ) -> ApplianceType:
+    """_summary_
+
+    Args:
+        raw_text (str): _description_
+        brand (str, optional): _description_. Defaults to "".
+        model_number (str, optional): _description_. Defaults to "".
+
+    Returns:
+        ApplianceType: _description_
+    """
     text = f"{raw_text} {brand} {model_number}".upper()
     model = model_number.upper()
 
@@ -207,6 +245,14 @@ def detect_appliance_type(
 
 
 def process_nameplate(image_path: str) -> NameplateFields:
+    """_summary_
+
+    Args:
+        image_path (str): _description_
+
+    Returns:
+        NameplateFields: _description_
+    """
     raw_text = run_ocr(image_path)
     result = extract_nameplate_fields(raw_text)
 
