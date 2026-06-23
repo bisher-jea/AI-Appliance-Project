@@ -31,7 +31,7 @@ app.add_middleware(
 
 templates = Jinja2Templates(directory="src/templates")
 
-# uploaded files go to uploads and makes uploaded files viewable thr BE
+# uploaded files go to uploads and makes uploaded files viewable thru BE
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
