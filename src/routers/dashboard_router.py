@@ -2,13 +2,8 @@ from typing import Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from backend.operations import get_db
-from backend.db import (
-    HVACSubmission,
-    WaterHeaterSubmission,
-    HVACAnalysis,
-    WaterHeaterAnalysis
-)
+from core.operations import get_db
+from core.db import HVACAnalysisResponse, HVACSubmissionResponse, WaterHeaterAnalysisResponse, WaterHeaterSubmissionResponse
 
 dashboard_router = APIRouter(
     prefix="/dashboard",
@@ -18,20 +13,27 @@ dashboard_router = APIRouter(
 
 @dashboard_router.get("/")
 def get_dashboard(db: Session = Depends(get_db)) -> list[Any]:
+    """_summary_
 
-    hvac_submissions = db.query(HVACSubmission).all()
-    wh_submissions = db.query(WaterHeaterSubmission).all()
+    Args:
+        db (Session, optional): _description_. Defaults to Depends(get_db).
 
-    hvac_analysis = db.query(HVACAnalysis).all()
-    wh_analysis = db.query(WaterHeaterAnalysis).all()
+    Returns:
+        list[Any]: _description_
+    """
+    hvac_submissions: List[Any] = db.query(HVACSubmissionResponse).all()
+    wh_submissions: List[Any] = db.query(WaterHeaterSubmissionResponse).all()
 
-    hvac_map = {a.submission_id: a for a in hvac_analysis}
-    wh_map = {a.submission_id: a for a in wh_analysis}
+    hvac_analysis = db.query(HVACAnalysisResponse).all()
+    wh_analysis = db.query(WaterHeaterAnalysisResponse).all()
 
-    dashboard = []
+    hvac_map: dict[Any, Any] = {a.submission_id: a for a in hvac_analysis}
+    wh_map: dict[Any, Any] = {a.submission_id: a for a in wh_analysis}
+
+    dashboard: list[Any] = []
 
     for s in hvac_submissions:
-        a = hvac_map.get(s.id)
+        a: Any | None = hvac_map.get(s.id)
 
         dashboard.append({
             "id": s.id,
@@ -48,7 +50,7 @@ def get_dashboard(db: Session = Depends(get_db)) -> list[Any]:
         })
 
     for s in wh_submissions:
-        a = wh_map.get(s.id)
+        a: Any | None: Any | None = wh_map.get(s.id)
 
         dashboard.append({
             "id": s.id,

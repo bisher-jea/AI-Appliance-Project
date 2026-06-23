@@ -1,18 +1,17 @@
 from uuid import uuid4
 import os
 import shutil
-from typing import List
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from backend.operations import get_db
-from database.db import HVACSubmission, HVACAnalysis
-from backend.schema import HVACSubmissionResponse, HVACAnalysisResponse
+from core.operations import get_db
+from core.db import HVACSubmissionResponse, HVACAnalysisResponse
+from core.schema import HVACSubmission, HVACAnalysis
 
 # your existing services/utilities
-from services.ocr import process_nameplate
-from services.hvac import decode_hvac_age, recommend_hvac_replacement
+from services.ocr_service import process_nameplate
+from services.hvac_service import decode_hvac_age, recommend_hvac_replacement
 
 
 hvac_router = APIRouter(
@@ -24,7 +23,7 @@ UPLOAD_FOLDER = "uploads"
 
 
 @hvac_router.post("/submit")
-async def submit_hvac(request: Request, db: Session = Depends(get_db)):
+async def submit_hvac(request: Request, db: Session = Depends(get_db)) -> dict[str, str | int]:
     form = await request.form()
 
     address = form["address"]

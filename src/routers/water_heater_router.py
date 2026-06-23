@@ -1,17 +1,16 @@
 from uuid import uuid4
 import os
 import shutil
-from typing import List
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from backend.operations import get_db
-from database.db import WaterHeaterSubmission, WaterHeaterAnalysis
-from backend.schema import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
+from core.operations import get_db
+from core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
+from core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
 
-from services.ocr import process_nameplate
-from services.water_heater import (
+from services.ocr_service import process_nameplate
+from services.water_heater_service import (
     decode_water_heater_age,
     recommend_water_heater_replacement
 )
@@ -25,7 +24,16 @@ UPLOAD_FOLDER = "uploads"
 
 
 @water_heater_router.post("/submit")
-async def submit_water_heater(request: Request, db: Session = Depends(get_db)):
+async def submit_water_heater(request: Request, db: Session = Depends(get_db)) -> dict[str, str | int]:
+    """_summary_
+
+    Args:
+        request (Request): _description_
+        db (Session, optional): _description_. Defaults to Depends(get_db).
+
+    Returns:
+        _type_: _description_
+    """
     form = await request.form()
 
     address = form["address"]
@@ -90,6 +98,16 @@ async def submit_water_heater(request: Request, db: Session = Depends(get_db)):
 @appliance_router.get(
     "/water-heaters", response_model=list[WaterHeaterSubmissionResponse])
 def get_water_heater_submissions(limit: int = 100, offset: int = 0, db: Session = Depends(get_db)) -> List[WaterHeaterSubmission]:
+    """_summary_
+
+    Args:
+        limit (int, optional): _description_. Defaults to 100.
+        offset (int, optional): _description_. Defaults to 0.
+        db (Session, optional): _description_. Defaults to Depends(get_db).
+
+    Returns:
+        List[WaterHeaterSubmission]: _description_
+    """
     return db.query(WaterHeaterSubmission).limit(limit).offset(offset).all()
 
 
@@ -97,4 +115,14 @@ def get_water_heater_submissions(limit: int = 100, offset: int = 0, db: Session 
 @appliance_router.get(
     "/water-heater-analysis", response_model=list[WaterHeaterAnalysisResponse])
 def get_water_heater_analysis(limit: int = 100, offset: int = 0, db: Session = Depends(get_db)) -> List[WaterHeaterAnalysis]:
+    """_summary_
+
+    Args:
+        limit (int, optional): _description_. Defaults to 100.
+        offset (int, optional): _description_. Defaults to 0.
+        db (Session, optional): _description_. Defaults to Depends(get_db).
+
+    Returns:
+        List[WaterHeaterAnalysis]: _description_
+    """
     return db.query(WaterHeaterAnalysis).limit(limit).offset(offset).all()

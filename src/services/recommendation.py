@@ -1,4 +1,3 @@
-from typing import Any
 from pydantic import BaseModel
 
 
@@ -7,8 +6,19 @@ class ReplacementRecommendation(BaseModel):
     priority: str
     reason: str
 
-def build_recommendation(subtype, age, monitor_age, replace_age) -> ReplacementRecommendation:
 
+def build_recommendation(subtype, age, monitor_age, replace_age) -> ReplacementRecommendation:
+    """_summary_
+
+    Args:
+        subtype (_type_): _description_
+        age (_type_): _description_
+        monitor_age (_type_): _description_
+        replace_age (_type_): _description_
+
+    Returns:
+        ReplacementRecommendation: _description_
+    """
     if age is None:
         return ReplacementRecommendation(
             recommendation="Review",

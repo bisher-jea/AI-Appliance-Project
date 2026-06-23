@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine, Engine
-from backend.schema import Base
+from core.schema import Base
 # from dotenv import load_dotenv # loads env
 import os
-from typing import Generator      # db dependency type hint
+from collections.abc import Generator
 
 # import from schema.py; base contains all table definitions
 # load_dotenv() # loads .env variables into python !!!!!PAY EXTRA CAUTION!!!

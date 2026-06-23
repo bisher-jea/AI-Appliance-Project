@@ -2,6 +2,7 @@ from datetime import date, datetime
 import re
 from re import Match
 from typing import Any
+from .recommendation import build_recommendation, ReplacementRecommendation
 
 
 # THERE IS 2 VERSIONS: ONE UP TO 2008, AND ONE FOR POST 2008
