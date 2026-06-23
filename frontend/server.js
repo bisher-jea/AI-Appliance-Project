@@ -20,7 +20,6 @@ const upload = multer({ storage: storage });
 app.post(
     "/upload",
     upload.fields([
-        { name: "appliancePhoto", maxCount: 1 },
         { name: "nameplatePhoto", maxCount: 1 }
     ]),
     (req, res) => {

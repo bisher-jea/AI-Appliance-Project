@@ -23,6 +23,7 @@ jobs:
           mkdir site
           cp src/templates/index.html site/index.html
           cp -r src/static site/static
+          ls -R site
 
       - uses: actions/configure-pages@v5
 
