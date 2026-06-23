@@ -111,13 +111,13 @@ def get_report_page(
 
     report_rows = [
         row for row in all_rows
-        if row["address"] == address
+        if row["address"].strip().lower() == address.strip().lower()
     ]
 
     return templates.TemplateResponse(
+        request,
         "report.html",
         {
-            "request": request,
             "address": address,
             "appliances": report_rows,
         }

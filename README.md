@@ -3,12 +3,12 @@ This project is an AI-powered appliance identification system designed for home 
 
 ## Core Functionalities
 - Optical character recognition
-- Equipement extraction information
+- Equipment extraction information
 - Brand recognition
 - Serial number decoding
 - Age calculation
 - Data validation
-- Manual review flagigng
+- Manual review flagging
 - Database integration
 
 ## Installation
@@ -19,7 +19,7 @@ This project is an AI-powered appliance identification system designed for home 
 "python-dotenv>=1.2.2"
 "sqlalchemy>=2.0.49"
 "uvicorn>=0.47.0"
-"pytesseract>=0.3.13"
+"python-doctr>="
 ```
 2. Run `pip install -e .` at the main project level (`{bisher_project/`)
 3. Create a file named `.env` and enter the following values into it (for a sqlite DB):
