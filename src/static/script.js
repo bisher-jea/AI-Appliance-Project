@@ -1,5 +1,5 @@
-const systemCount = document.getElementById("systemCount");
-const systemsContainer = document.getElementById("systemsContainer");
+const systemCount = document.getElementById("applianceCount");
+const systemsContainer = document.getElementById("applianceContainer");
 const machineForm = document.getElementById("machineForm");
 const applianceType = document.getElementById("applianceType");
 
@@ -18,7 +18,7 @@ function createSystemQuestions() {
         const systemDiv = document.createElement("div");
         systemDiv.className = "system-card";
 
-        // if HVAC selected, prompt for indoor and outdoor nameplate
+        // if HVAC selected, prompt for nameplate
         if (type === "HVAC") {
             systemDiv.innerHTML = `
                 <h2>HVAC System ${i}</h2>
