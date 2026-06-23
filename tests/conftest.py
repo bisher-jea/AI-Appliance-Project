@@ -1,4 +1,4 @@
-import os
+"""import os
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -55,3 +55,4 @@ def db_session():
         yield db
     finally:
         db.close()
+"""

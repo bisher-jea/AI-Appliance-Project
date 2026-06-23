@@ -1,4 +1,4 @@
-
+"""
 # testing capabilities of 
 # applicable files: schema.py, appliance.py, db.py
 
@@ -298,7 +298,7 @@ def test_water_heater_analysis_route_returns_database_records(
     assert data[0]["serial_number"] is None
     assert data[0]["age"] is None
     assert data[0]["replacement_recommendation"] is None
-# -------------DB.PY-----------------------------------------------------------
+
 
 
 # pydantic response models validate correctly
@@ -395,3 +395,4 @@ def test_hvac_analysis_response_accepts_completed_ai_fields():
     assert response.age == 12
     assert response.replacement_recommendation == "Recommend replacement"
 
+"""

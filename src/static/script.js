@@ -30,7 +30,7 @@ function createSystemQuestions() {
                     type="file" 
                     id="Nameplate${i}" 
                     name="Nameplate${i}" 
-                    multiple accept="image/*"
+                    accept="image/*"
                     required
                 >
 
@@ -54,7 +54,7 @@ function createSystemQuestions() {
                     type="file" 
                     id="waterHeaterNameplate${i}" 
                     name="waterHeaterNameplate${i}" 
-                    multiple accept="image/*"
+                    accept="image/*"
                     required
                 >
 
@@ -70,16 +70,41 @@ function createSystemQuestions() {
 applianceCount.addEventListener("input", createSystemQuestions);
 applianceType.addEventListener("change", createSystemQuestions);
 
-machineForm.addEventListener("submit", function(event) {
+machineForm.addEventListener("submit", async function(event) {
     event.preventDefault();
 
     const formData = new FormData(machineForm);
+    const type = applianceType.value;
 
-    console.log("Submitted Form Data:");
+    let submitUrl = "";
 
-    for (const [key, value] of formData.entries()) {
-        console.log(key, value);
+    if (type === "HVAC") {
+        submitUrl = "/hvac/submit";
+    } else if (type === "Water Heater") {
+        submitUrl = "/water-heater/submit";
+    } else {
+        alert("Please select an appliance type.");
+        return;
     }
 
-    alert("Form submitted successfully!");
+    const response = await fetch(submitUrl, {
+        method: "POST",
+        body: formData,
+        redirect: "follow"
+    });
+
+    if (response.redirected) {
+        window.location.href = response.url;
+        return;
+    }
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error(errorText);
+        alert("Submission failed. Check the console or terminal.");
+        return;
+    }
+
+    const result = await response.json();
+    console.log(result);
 });
