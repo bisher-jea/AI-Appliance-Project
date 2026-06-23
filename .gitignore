@@ -1,5 +1,6 @@
-.env
-sqlite.db
-uploads/
 __pycache__/
-test.db
+*.pyc
+.env
+uploads/
+data/*.db
+.pytest_cache/

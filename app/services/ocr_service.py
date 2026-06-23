@@ -4,6 +4,7 @@ import cv2
 from cv2.typing import MatLike
 from doctr.io import DocumentFile
 from doctr.models import ocr_predictor
+from datetime import date, datetime
 
 from backend.schema import HVACAnalysis, WaterHeaterAnalysis
 
@@ -182,64 +183,3 @@ def process_nameplate(image_path: str) -> dict[str, Any]:
     )
 
     return result
-
-
-def save_hvac_ocr_results(
-    db,
-    submission_id,
-    ocr_result: dict[str, Any],
-    age_info: dict[str, Any] | None,
-    recommendation: Any
-) -> HVACAnalysis:
-    analysis = (
-        db.query(HVACAnalysis)
-        .filter(HVACAnalysis.submission_id == submission_id)
-        .first()
-    )
-
-    if not analysis:
-        analysis = HVACAnalysis(submission_id=submission_id)
-        db.add(analysis)
-
-    analysis.brand = ocr_result.get("brand")
-    analysis.model_number = ocr_result.get("model_number")
-    analysis.serial_number = ocr_result.get("serial_number")
-    analysis.subtype = ocr_result.get("subtype")
-    analysis.age = age_info.get("age_years") if age_info else None
-    analysis.replacement_recommendation = recommendation.recommendation
-
-    db.commit()
-    db.refresh(analysis)
-
-    return analysis
-
-
-def save_water_heater_ocr_results(
-    db,
-    submission_id,
-    ocr_result: dict[str, Any],
-    age_info: dict[str, Any] | None,
-    recommendation: Any
-) -> WaterHeaterAnalysis:
-    analysis = (
-        db.query(WaterHeaterAnalysis)
-        .filter(WaterHeaterAnalysis.submission_id == submission_id)
-        .first()
-    )
-
-    if not analysis:
-        analysis = WaterHeaterAnalysis(submission_id=submission_id)
-        db.add(analysis)
-
-    analysis.brand = ocr_result.get("brand")
-    analysis.model_number = ocr_result.get("model_number")
-    analysis.serial_number = ocr_result.get("serial_number")
-    analysis.subtype = ocr_result.get("subtype")
-    analysis.age = age_info.get("age_years") if age_info else None
-    analysis.replacement_recommendation = recommendation.recommendation
-
-    db.commit()
-    db.refresh(analysis)
-
-    return analysis
-

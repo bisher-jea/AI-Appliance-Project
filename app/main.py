@@ -6,14 +6,14 @@ import os
 import shutil
 from contextlib import asynccontextmanager
 
-from backend.ocr import process_nameplate
+from backend.services.ocr_service import process_nameplate
 from backend.operations import get_db, init_tables, ENGINE
 from backend.schema import (HVACSubmission, WaterHeaterSubmission, HVACAnalysis, WaterHeaterAnalysis)
-from backend.parsing import decode_hvac_age, decode_water_heater_age
-from backend.recommendation import recommend_hvac_replacement, recommend_water_heater_replacement
-from routers.hvac_router import hvac_router
-from routers.water_heater_router import water_heater_router
-from routers.dashboard_router import dashboard_router
+from backend.services.hvac_service import decode_hvac_age, recommend_hvac_replacement
+from backend.services.water_heater_service import decode_water_heater_age, recommend_water_heater_replacement
+from backend.routers.hvac_router import hvac_router
+from backend.routers.water_heater_router import water_heater_router
+from backend.routers.dashboard_router import dashboard_router
 
 
 # lifespan function

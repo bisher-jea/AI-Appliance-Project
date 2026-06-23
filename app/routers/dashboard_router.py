@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from backend.operations import get_db
-from database.db import (
+from backend.db import (
     HVACSubmission,
     WaterHeaterSubmission,
     HVACAnalysis,
