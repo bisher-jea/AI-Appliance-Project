@@ -1,86 +1,111 @@
-from uuid import uuid4
 import os
 import shutil
+from typing import Annotated
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
+from starlette.datastructures import FormData
 
 from core.operations import get_db
 from core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
 from core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
-
 from services.ocr_service import process_nameplate
 from services.water_heater_service import (
-    decode_water_heater_age,
-    recommend_water_heater_replacement
+    decode_water_heater_age_from_ocr,
+    recommend_water_heater_replacement,
 )
+
 
 water_heater_router = APIRouter(
     prefix="/appliances/water-heaters",
-    tags=["Water Heaters"]
+    tags=["Water Heaters"],
 )
 
 UPLOAD_FOLDER = "uploads"
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 @water_heater_router.post("/submit")
-async def submit_water_heater(request: Request, db: Session = Depends(get_db)) -> dict[str, str | int]:
+async def submit_water_heater(
+    request: Request,
+    db: DbSession,
+) -> dict[str, str | int]:
     """_summary_
 
     Args:
         request (Request): _description_
-        db (Session, optional): _description_. Defaults to Depends(get_db).
+        db (DbSession): _description_
+
+    Raises:
+        HTTPException: _description_
+        HTTPException: _description_
+        HTTPException: _description_
 
     Returns:
-        _type_: _description_
+        dict[str, str | int]: _description_
     """
-    form = await request.form()
+    form: FormData = await request.form()
 
-    address = form["address"]
-    appliance_count = int(form["applianceCount"])
+    address_value = form.get("address")
+    count_value = form.get("applianceCount")
 
+    if not isinstance(address_value, str):
+        raise HTTPException(400, "Missing address")
+
+    if not isinstance(count_value, str):
+        raise HTTPException(400, "Missing applianceCount")
+
+    address = address_value
+    appliance_count = int(count_value)
     saved_count = 0
+
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     for i in range(1, appliance_count + 1):
         unique_id = str(uuid4())
 
-        file = form[f"waterHeaterNameplate{i}"]
+        file_value = form.get(f"waterHeaterNameplate{i}")
 
-        filename = f"{unique_id}_wh_{i}_{file.filename}"
+        if not isinstance(file_value, UploadFile):
+            raise HTTPException(400, f"Missing waterHeaterNameplate{i}")
+
+        filename = f"{unique_id}_wh_{i}_{file_value.filename}"
         path = os.path.join(UPLOAD_FOLDER, filename)
 
         with open(path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            shutil.copyfileobj(file_value.file, buffer)
 
         submission = WaterHeaterSubmission(
             address=address,
             appliance_number=i,
-            nameplate_photo=path
+            nameplate_photo=path,
         )
 
         db.add(submission)
         db.flush()
 
         ocr_result = process_nameplate(path)
+        age_info = decode_water_heater_age_from_ocr(ocr_result)
 
-        age_info = decode_water_heater_age(
-            ocr_result.get("brand", ""),
-            ocr_result.get("serial_number", "")
+        age: int | None = (
+            age_info.get("age_years") if age_info is not None else None
         )
 
         recommendation = recommend_water_heater_replacement(
-            ocr_result.get("subtype", ""),
-            age_info
+            subtype=ocr_result.subtype,
+            age_info=age_info,
         )
 
         analysis = WaterHeaterAnalysis(
             submission_id=submission.id,
-            brand=ocr_result.get("brand"),
-            model_number=ocr_result.get("model_number"),
-            serial_number=ocr_result.get("serial_number"),
-            age=age_info.get("age_years") if age_info else None,
+            brand=ocr_result.brand,
+            model_number=ocr_result.model_number,
+            serial_number=ocr_result.serial_number,
+            age=age,
             replacement_recommendation=recommendation.recommendation,
-            subtype=ocr_result.get("subtype")
+            subtype=ocr_result.subtype,
+            needs_human_review=ocr_result.needs_human_review,
         )
 
         db.add(analysis)
@@ -90,39 +115,59 @@ async def submit_water_heater(request: Request, db: Session = Depends(get_db)) -
 
     return {
         "message": "Water heater submission saved",
-        "systems_saved": saved_count
+        "systems_saved": saved_count,
     }
 
 
-# get wh submissions
-@appliance_router.get(
-    "/water-heaters", response_model=list[WaterHeaterSubmissionResponse])
-def get_water_heater_submissions(limit: int = 100, offset: int = 0, db: Session = Depends(get_db)) -> List[WaterHeaterSubmission]:
+@water_heater_router.get(
+    "",
+    response_model=list[WaterHeaterSubmissionResponse],
+)
+def get_water_heater_submissions(
+    db: DbSession,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[WaterHeaterSubmission]:
     """_summary_
 
     Args:
+        db (DbSession): _description_
         limit (int, optional): _description_. Defaults to 100.
         offset (int, optional): _description_. Defaults to 0.
-        db (Session, optional): _description_. Defaults to Depends(get_db).
 
     Returns:
-        List[WaterHeaterSubmission]: _description_
+        list[WaterHeaterSubmission]: _description_
     """
-    return db.query(WaterHeaterSubmission).limit(limit).offset(offset).all()
+    return list(
+        db.query(WaterHeaterSubmission)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
 
-# get wh ai analysis
-@appliance_router.get(
-    "/water-heater-analysis", response_model=list[WaterHeaterAnalysisResponse])
-def get_water_heater_analysis(limit: int = 100, offset: int = 0, db: Session = Depends(get_db)) -> List[WaterHeaterAnalysis]:
+@water_heater_router.get(
+    "/analysis",
+    response_model=list[WaterHeaterAnalysisResponse],
+)
+def get_water_heater_analysis(
+    db: DbSession,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[WaterHeaterAnalysis]:
     """_summary_
 
     Args:
+        db (DbSession): _description_
         limit (int, optional): _description_. Defaults to 100.
         offset (int, optional): _description_. Defaults to 0.
-        db (Session, optional): _description_. Defaults to Depends(get_db).
 
     Returns:
-        List[WaterHeaterAnalysis]: _description_
+        list[WaterHeaterAnalysis]: _description_
     """
-    return db.query(WaterHeaterAnalysis).limit(limit).offset(offset).all()
+    return list(
+        db.query(WaterHeaterAnalysis)
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
