@@ -22,6 +22,6 @@ jobs:
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: ./frontend
+          path: ./src/templates
 
       - uses: actions/deploy-pages@v4
