@@ -1,0 +1,5 @@
+.env
+sqlite.db
+uploads/
+__pycache__/
+test.db
