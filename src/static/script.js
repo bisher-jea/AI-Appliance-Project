@@ -9,7 +9,7 @@ function createSystemQuestions() {
 
     applianceContainer.innerHTML = "";
     
-    // dynamic questions: shows the following set of questions x amt of times where x is the response to the previous question
+    // dynamic questions (shows the following set of questions x amt of times where x is the response to the previous question)
     if (!count || count < 1 || !type) {
         return;
     }
@@ -18,7 +18,7 @@ function createSystemQuestions() {
         const systemDiv = document.createElement("div");
         systemDiv.className = "system-card";
 
-        // if HVAC selected, prompt for nameplate
+        // if HVAC selected
         if (type === "HVAC") {
             systemDiv.innerHTML = `
                 <h2>HVAC System ${i}</h2>
@@ -42,7 +42,7 @@ function createSystemQuestions() {
             `;
         }
 
-        // if waterheater selected, only prompt for one nameplate photo
+        // if waterheater selected
         if (type === "Water Heater") {
             systemDiv.innerHTML = `
                 <h2>Water Heater ${i}</h2>

@@ -1,8 +1,6 @@
 from typing import Annotated, TypedDict
-
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
-
 from fastapi.templating import Jinja2Templates
 from core.operations import get_db
 from core.schema import (
@@ -36,31 +34,15 @@ class DashboardRow(TypedDict):
     subtype: str | None
 
 
-@dashboard_router.get("/")
-def get_dashboard(db: DbSession) -> list[DashboardRow]:
-    """_summary_
-
-    Args:
-        db (DbSession): _description_
-
-    Returns:
-        list[DashboardRow]: _description_
-    """
+def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
     hvac_submissions = db.query(HVACSubmission).all()
     wh_submissions = db.query(WaterHeaterSubmission).all()
 
     hvac_analysis = db.query(HVACAnalysis).all()
     wh_analysis = db.query(WaterHeaterAnalysis).all()
 
-    hvac_map: dict[str, HVACAnalysis] = {
-        analysis.submission_id: analysis
-        for analysis in hvac_analysis
-    }
-
-    wh_map: dict[str, WaterHeaterAnalysis] = {
-        analysis.submission_id: analysis
-        for analysis in wh_analysis
-    }
+    hvac_map = {analysis.submission_id: analysis for analysis in hvac_analysis}
+    wh_map = {analysis.submission_id: analysis for analysis in wh_analysis}
 
     dashboard: list[DashboardRow] = []
 
@@ -68,7 +50,7 @@ def get_dashboard(db: DbSession) -> list[DashboardRow]:
         analysis = hvac_map.get(submission.id)
 
         dashboard.append({
-            "id": submission.id,
+            "id": str(submission.id),
             "appliance_type": "HVAC",
             "address": submission.address,
             "appliance_number": submission.appliance_number,
@@ -85,7 +67,7 @@ def get_dashboard(db: DbSession) -> list[DashboardRow]:
         analysis = wh_map.get(submission.id)
 
         dashboard.append({
-            "id": submission.id,
+            "id": str(submission.id),
             "appliance_type": "Water Heater",
             "address": submission.address,
             "appliance_number": submission.appliance_number,
@@ -101,24 +83,32 @@ def get_dashboard(db: DbSession) -> list[DashboardRow]:
     return dashboard
 
 
+@dashboard_router.get("/")
+def get_dashboard(db: DbSession) -> list[DashboardRow]:
+    return build_dashboard_rows(db)
+
+
 @dashboard_router.get("/report")
 def get_report_page(
     request: Request,
     address: str,
-    db: DbSession
+    db: DbSession,
 ):
-    all_rows = get_dashboard(db)
+    all_rows = build_dashboard_rows(db)
+
+    normalized_address = address.strip().lower()
 
     report_rows = [
         row for row in all_rows
-        if row["address"].strip().lower() == address.strip().lower()
+        if row["address"].strip().lower() == normalized_address
     ]
 
     return templates.TemplateResponse(
-        request,
-        "report.html",
-        {
+        request=request,
+        name="report.html",
+        context={
             "address": address,
             "appliances": report_rows,
-        }
+        },
     )
+
