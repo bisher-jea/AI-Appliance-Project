@@ -19,7 +19,6 @@ dashboard_router = APIRouter(
     tags=["Dashboard"],
 )
 
-
 class DashboardRow(TypedDict):
     id: str
     appliance_type: str
@@ -35,6 +34,14 @@ class DashboardRow(TypedDict):
 
 
 def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
+    """_summary_
+
+    Args:
+        db (DbSession): _description_
+
+    Returns:
+        list[DashboardRow]: _description_
+    """
     hvac_submissions = db.query(HVACSubmission).all()
     wh_submissions = db.query(WaterHeaterSubmission).all()
 
@@ -94,6 +101,16 @@ def get_report_page(
     address: str,
     db: DbSession,
 ):
+    """_summary_
+
+    Args:
+        request (Request): _description_
+        address (str): _description_
+        db (DbSession): _description_
+
+    Returns:
+        _type_: _description_
+    """
     all_rows = build_dashboard_rows(db)
 
     normalized_address = address.strip().lower()

@@ -2,19 +2,69 @@
 <html>
 <head>
     <title>Report for {{ address }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/report.css">
 </head>
-<body>
-    <h1>REPORT FOR {{ address }}</h1>
 
-    {% for appliance in appliances %}
-        <div>
-            <p>Appliance Type: {{ appliance.subtype or appliance.appliance_type }}</p>
-            <p>Brand: {{ appliance.brand }}</p>
-            <p>Model No: {{ appliance.model_number }}</p>
-            <p>Serial No: {{ appliance.serial_number }}</p>
-            <p>Age: {{ appliance.age }} years</p>
-            <p>RECOMMENDATION: {{ appliance.replacement_recommendation }}</p>
-        </div>
-    {% endfor %}
+<body>
+    <main class="report-page">
+        <section class="report-header">
+            <h1>Appliance Report</h1>
+            <p>{{ address }}</p>
+        </section>
+
+        <section class="report-summary">
+            <p>Total Appliances: {{ appliances|length }}</p>
+        </section>
+
+        <section class="appliance-list">
+            {% for appliance in appliances %}
+                <article class="appliance-card">
+                    <div class="card-header">
+                        <h2>{{ appliance.subtype or appliance.appliance_type }}</h2>
+                        <span>Appliance #{{ appliance.appliance_number }}</span>
+                    </div>
+
+                    <div class="details-grid">
+                        <div>
+                            <strong>Brand</strong>
+                            <p>{{ appliance.brand or "N/A" }}</p>
+                        </div>
+
+                        <div>
+                            <strong>Model No.</strong>
+                            <p>{{ appliance.model_number or "N/A" }}</p>
+                        </div>
+
+                        <div>
+                            <strong>Serial No.</strong>
+                            <p>{{ appliance.serial_number or "N/A" }}</p>
+                        </div>
+
+                        <div>
+                            <strong>Age</strong>
+                            <p>{{ appliance.age or "N/A" }} years</p>
+                        </div>
+                    </div>
+
+                    <div class="recommendation
+                        {% if appliance.replacement_recommendation == 'Replace' %}
+                            recommendation-replace
+                        {% elif appliance.replacement_recommendation == 'Monitor' %}
+                            recommendation-monitor
+                        {% elif appliance.replacement_recommendation == 'No Replacement Needed' %}
+                            recommendation-good
+                        {% endif %}
+                    ">
+                        <strong>Recommendation</strong>
+                        <p>{{ appliance.replacement_recommendation or "N/A" }}</p>
+                    </div>
+                </article>
+            {% else %}
+                <p class="empty-message">No appliances found for this address.</p>
+            {% endfor %}
+        </section>
+    </main>
 </body>
 </html>
