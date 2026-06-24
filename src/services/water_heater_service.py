@@ -244,7 +244,7 @@ def save_water_heater_ocr_results(
     ocr_result: NameplateFields,
     age_info: AgeInfo | None,
     recommendation: ReplacementRecommendation,
-) -> WaterHeaterAnalysis:
+) -> None:
     analysis = (
         db.query(WaterHeaterAnalysis)
         .filter(WaterHeaterAnalysis.submission_id == submission_id)
@@ -265,7 +265,7 @@ def save_water_heater_ocr_results(
     db.commit()
     db.refresh(analysis)
 
-    return analysis
+    return None
 
 
 def recommend_water_heater_replacement(

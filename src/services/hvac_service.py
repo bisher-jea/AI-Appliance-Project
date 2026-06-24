@@ -294,7 +294,7 @@ def save_hvac_ocr_results(
     ocr_result: NameplateFields,
     age_info: AgeInfo | None,
     recommendation: ReplacementRecommendation,
-) -> HVACAnalysis:
+) -> None:
     """_summary_
 
     Args:
@@ -327,7 +327,7 @@ def save_hvac_ocr_results(
     db.commit()
     db.refresh(analysis)
 
-    return analysis
+    return None
 
 
 def recommend_hvac_replacement(

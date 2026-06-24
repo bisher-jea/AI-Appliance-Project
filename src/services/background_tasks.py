@@ -79,5 +79,3 @@ def process_water_heater_submission_background(submission_id: str) -> None:
             recommendation=recommendation,
         )
 
-        db.add(analysis)
-        db.commit()
