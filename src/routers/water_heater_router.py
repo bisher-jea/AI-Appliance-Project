@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import Annotated
 from uuid import uuid4
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
 from fastapi.responses import RedirectResponse
@@ -11,11 +11,7 @@ from urllib.parse import quote
 from core.operations import get_db
 from core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
 from core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
-from services.ocr_service import process_nameplate
-from services.water_heater_service import (
-    decode_water_heater_age_from_ocr,
-    recommend_water_heater_replacement,
-)
+from services.background_tasks import process_water_heater_submission_background
 
 
 water_heater_router = APIRouter(
@@ -31,6 +27,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 async def submit_water_heater(
     request: Request,
     db: DbSession,
+    background_tasks: BackgroundTasks,
 ) -> RedirectResponse:
     """_summary_
 
@@ -86,30 +83,11 @@ async def submit_water_heater(
         db.add(submission)
         db.flush()
 
-        ocr_result = process_nameplate(path)
-        age_info = decode_water_heater_age_from_ocr(ocr_result)
-
-        age: int | None = (
-            age_info.get("age_years") if age_info is not None else None
+        background_tasks.add_task(
+            process_water_heater_submission_background,
+            submission.id,
         )
 
-        recommendation = recommend_water_heater_replacement(
-            subtype=ocr_result.subtype,
-            age_info=age_info,
-        )
-
-        analysis = WaterHeaterAnalysis(
-            submission_id=submission.id,
-            brand=ocr_result.brand,
-            model_number=ocr_result.model_number,
-            serial_number=ocr_result.serial_number,
-            age=age,
-            replacement_recommendation=recommendation.recommendation,
-            subtype=ocr_result.subtype,
-            needs_human_review=ocr_result.needs_human_review,
-        )
-
-        db.add(analysis)
         saved_count += 1
 
     db.commit()

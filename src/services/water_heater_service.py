@@ -1,10 +1,12 @@
 from datetime import date, datetime
 import re
 from re import Match
-from typing import NotRequired, TypedDict
+from typing import TypedDict, NotRequired
+from sqlalchemy.orm import Session
 
 from .ocr_service import NameplateFields
 from .recommendation import build_recommendation, ReplacementRecommendation
+from core.schema import WaterHeaterAnalysis
 
 
 class AgeInfo(TypedDict):
@@ -202,21 +204,12 @@ def decode_rinnai(serial: str) -> AgeInfo | None:
     }
 
 
-def decode_water_heater_age(
+def decode_water_heater_age_from_brand_serial(
     brand: str,
     serial: str,
 ) -> AgeInfo | None:
-    """_summary_
-
-    Args:
-        brand (str): _description_
-        serial (str): _description_
-
-    Returns:
-        AgeInfo | None: _description_
-    """
     brand = brand.upper().strip()
-    serial = serial.upper().replace(" ", "").replace("-", "")
+    serial = serial.upper().strip().replace(" ", "").replace("-", "")
 
     if not brand or not serial:
         return None
@@ -236,36 +229,49 @@ def decode_water_heater_age(
     return None
 
 
-def decode_water_heater_age_from_ocr(
+def decode_water_heater_age(
     ocr_result: NameplateFields,
 ) -> AgeInfo | None:
-    """_summary_
-
-    Args:
-        ocr_result (NameplateFields): _description_
-
-    Returns:
-        AgeInfo | None: _description_
-    """
-    return decode_water_heater_age(
+    return decode_water_heater_age_from_brand_serial(
         brand=ocr_result.brand,
         serial=ocr_result.serial_number,
     )
+
+
+def save_water_heater_ocr_results(
+    db: Session,
+    submission_id: str,
+    ocr_result: NameplateFields,
+    age_info: AgeInfo | None,
+    recommendation: ReplacementRecommendation,
+) -> WaterHeaterAnalysis:
+    analysis = (
+        db.query(WaterHeaterAnalysis)
+        .filter(WaterHeaterAnalysis.submission_id == submission_id)
+        .first()
+    )
+
+    if analysis is None:
+        analysis = WaterHeaterAnalysis(submission_id=submission_id)
+        db.add(analysis)
+
+    analysis.brand = ocr_result.brand
+    analysis.model_number = ocr_result.model_number
+    analysis.serial_number = ocr_result.serial_number
+    analysis.subtype = ocr_result.subtype
+    analysis.age = age_info.get("age_years") if age_info else None
+    analysis.replacement_recommendation = recommendation.recommendation
+
+    db.commit()
+    db.refresh(analysis)
+
+    return analysis
 
 
 def recommend_water_heater_replacement(
     subtype: str | None,
     age_info: AgeInfo | None,
 ) -> ReplacementRecommendation:
-    """_summary_
-
-    Args:
-        subtype (str | None): _description_
-        age_info (AgeInfo | None): _description_
-
-    Returns:
-        ReplacementRecommendation: _description_
-    """
     if age_info is None:
         return ReplacementRecommendation(
             recommendation="Review",
@@ -273,7 +279,14 @@ def recommend_water_heater_replacement(
             reason="Unable to calculate water heater age.",
         )
 
-    age = age_info["age_years"]
+    age = age_info.get("age_years")
+
+    if age is None:
+        return ReplacementRecommendation(
+            recommendation="Review",
+            priority="Manual Review",
+            reason="Unable to determine water heater age.",
+        )
 
     if not subtype:
         return ReplacementRecommendation(

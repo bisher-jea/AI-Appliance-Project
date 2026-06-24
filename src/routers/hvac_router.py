@@ -2,7 +2,7 @@ import os
 import shutil
 from typing import cast, NotRequired, TypedDict, Annotated
 from uuid import uuid4
-from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException
+from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
@@ -11,9 +11,7 @@ from urllib.parse import quote
 from core.operations import get_db
 from core.db import HVACSubmissionResponse, HVACAnalysisResponse
 from core.schema import HVACSubmission, HVACAnalysis
-
-from services.ocr_service import process_nameplate
-from services.hvac_service import decode_hvac_age, recommend_hvac_replacement
+from services.background_tasks import process_hvac_submission_background
 
 
 hvac_router = APIRouter(
@@ -39,6 +37,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 async def submit_hvac(
     request: Request,
     db: DbSession,
+    background_tasks: BackgroundTasks,
 ) -> RedirectResponse:
     """_summary_
 
@@ -90,32 +89,10 @@ async def submit_hvac(
         db.add(submission)
         db.flush()
 
-        ocr_result = process_nameplate(path)
-
-        age_info = decode_hvac_age(ocr_result)
-
-        age: int | None = None
-
-        if age_info is not None:
-            age = age_info.get("age_years")
-
-        recommendation = recommend_hvac_replacement(
-            subtype=ocr_result.subtype,
-            age_info=age_info,
+        background_tasks.add_task(
+            process_hvac_submission_background,
+            submission.id,
         )
-
-        analysis = HVACAnalysis(
-            submission_id=submission.id,
-            brand=ocr_result.brand,
-            model_number=ocr_result.model_number,
-            serial_number=ocr_result.serial_number,
-            age=age,
-            replacement_recommendation=recommendation.recommendation,
-            subtype=ocr_result.subtype,
-            needs_human_review=ocr_result.needs_human_review,
-        )
-
-        db.add(analysis)
         saved_count += 1
 
     db.commit()
