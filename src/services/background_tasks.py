@@ -88,4 +88,3 @@ def process_water_heater_submission_background(submission_id: str) -> None:
             age_info=age_info,
             recommendation=recommendation,
         )
-
