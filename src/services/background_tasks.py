@@ -23,6 +23,11 @@ db = Session(bind=ENGINE)
 
 
 def process_hvac_submission_background(submission_id: str) -> None:
+    """_summary_
+
+    Args:
+        submission_id (str): _description_
+    """
     with Session(bind=ENGINE) as db:
         submission = (
             db.query(HVACSubmission)
@@ -52,6 +57,11 @@ def process_hvac_submission_background(submission_id: str) -> None:
 
 
 def process_water_heater_submission_background(submission_id: str) -> None:
+    """
+
+    Args:
+        submission_id (str): _description_
+    """
     with Session(bind=ENGINE) as db:
         submission = (
             db.query(WaterHeaterSubmission)

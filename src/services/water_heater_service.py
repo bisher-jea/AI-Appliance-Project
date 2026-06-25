@@ -208,6 +208,15 @@ def decode_water_heater_age_from_brand_serial(
     brand: str,
     serial: str,
 ) -> AgeInfo | None:
+    """_summary_
+
+    Args:
+        brand (str): _description_
+        serial (str): _description_
+
+    Returns:
+        AgeInfo | None: _description_
+    """
     brand = brand.upper().strip()
     serial = serial.upper().strip().replace(" ", "").replace("-", "")
 
@@ -232,6 +241,14 @@ def decode_water_heater_age_from_brand_serial(
 def decode_water_heater_age(
     ocr_result: NameplateFields,
 ) -> AgeInfo | None:
+    """_summary_
+
+    Args:
+        ocr_result (NameplateFields): _description_
+
+    Returns:
+        AgeInfo | None: _description_
+    """
     return decode_water_heater_age_from_brand_serial(
         brand=ocr_result.brand,
         serial=ocr_result.serial_number,
@@ -245,6 +262,18 @@ def save_water_heater_ocr_results(
     age_info: AgeInfo | None,
     recommendation: ReplacementRecommendation,
 ) -> None:
+    """_summary_
+
+    Args:
+        db (Session): _description_
+        submission_id (str): _description_
+        ocr_result (NameplateFields): _description_
+        age_info (AgeInfo | None): _description_
+        recommendation (ReplacementRecommendation): _description_
+
+    Returns:
+        _type_: _description_
+    """
     analysis = (
         db.query(WaterHeaterAnalysis)
         .filter(WaterHeaterAnalysis.submission_id == submission_id)
