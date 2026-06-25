@@ -301,6 +301,15 @@ def recommend_water_heater_replacement(
     subtype: str | None,
     age_info: AgeInfo | None,
 ) -> ReplacementRecommendation:
+    """_summary_
+
+    Args:
+        subtype (str | None): _description_
+        age_info (AgeInfo | None): _description_
+
+    Returns:
+        ReplacementRecommendation: _description_
+    """
     if age_info is None:
         return ReplacementRecommendation(
             recommendation="Review",

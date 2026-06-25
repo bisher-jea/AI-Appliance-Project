@@ -21,6 +21,8 @@ from services.water_heater_service import (
 
 db = Session(bind=ENGINE)
 
+# Implementing background tasks to help with scalability
+
 
 def process_hvac_submission_background(submission_id: str) -> None:
     """_summary_
