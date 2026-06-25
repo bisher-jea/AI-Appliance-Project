@@ -228,7 +228,7 @@ def detect_appliance_type(
     if "AIR HANDLER" in text or "FAN COIL" in text:
         return ApplianceType(subtype="Air Handler")
 
-    if "TANKLESS" in text or "ON-DEMAND" in text or "ON DEMAND" in text:
+    if "TANKLESS" in text or "ON-DEMAND" in text or "ON DEMAND" in text:   # Marking for synonyms too
         return ApplianceType(subtype="Tankless")
 
     if (
