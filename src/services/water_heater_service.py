@@ -99,7 +99,7 @@ def decode_bradford_white(serial: str) -> AgeInfo | None:
         return None
 
     year_codes: dict[str, list[int]] = {
-        "A": [2004, 2024],
+        "A": [2004, 2024],   # overlap here sp watch for potential errors
         "B": [2005, 2025],
         "C": [2006, 2026],
         "D": [2007], "E": [2008], "F": [2009], "G": [2010],
