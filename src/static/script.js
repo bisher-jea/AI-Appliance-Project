@@ -89,22 +89,16 @@ machineForm.addEventListener("submit", async function(event) {
 
     const response = await fetch(submitUrl, {
         method: "POST",
-        body: formData,
-        redirect: "follow"
+        body: formData
     });
 
-    if (response.redirected) {
-        window.location.href = response.url;
+    if (response.ok) {
+        const address = encodeURIComponent(formData.get("address"));
+        window.location.href = `/dashboard/report?address=${address}`;
         return;
     }
 
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error(errorText);
-        alert("Submission failed. Check the console or terminal.");
-        return;
-    }
-
-    const result = await response.json();
-    console.log(result);
+    const errorText = await response.text();
+    console.error(errorText);
+    alert("Submission failed. Check the console or terminal.");
 });
