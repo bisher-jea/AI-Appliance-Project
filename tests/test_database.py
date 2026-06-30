@@ -1,18 +1,17 @@
-"""
+
 # testing capabilities of 
 # applicable files: schema.py, appliance.py, db.py
 
-from uuid import uuid4
 from sqlalchemy import inspect
 
-from backend.schema import (
+from src.core.schema import (
     HVACAnalysis,
     HVACSubmission,
     WaterHeaterAnalysis,
     WaterHeaterSubmission,
 )
 
-from database.db import (
+from src.core.db import (
     HVACAnalysisResponse,
     HVACSubmissionResponse,
     WaterHeaterAnalysisResponse,
@@ -300,99 +299,10 @@ def test_water_heater_analysis_route_returns_database_records(
     assert data[0]["replacement_recommendation"] is None
 
 
-
 # pydantic response models validate correctly
-def test_hvac_submission_response_validates_correctly():
-    response = HVACSubmissionResponse(
-        id=uuid4(),
-        address="123 Main St",
-        system_number=1,
-        outdoor_nameplate_photo="uploads/outdoor.jpg",
-        indoor_nameplate_photo="uploads/indoor.jpg",
-    )
-
-    assert response.address == "123 Main St"
-    assert response.system_number == 1
-    assert response.outdoor_nameplate_photo == "uploads/outdoor.jpg"
-    assert response.indoor_nameplate_photo == "uploads/indoor.jpg"
-
-
-def test_water_heater_submission_response_validates_correctly():
-    response = WaterHeaterSubmissionResponse(
-        id=uuid4(),
-        address="456 Oak Ave",
-        system_number=1,
-        nameplate_photo="uploads/water.jpg",
-    )
-
-    assert response.address == "456 Oak Ave"
-    assert response.system_number == 1
-    assert response.nameplate_photo == "uploads/water.jpg"
-
-
-# nullable AI fields can be none
-def test_hvac_analysis_response_accepts_none_fields():
-    response = HVACAnalysisResponse(
-        id=uuid4(),
-        submission_id=uuid4(),
-        model_number=None,
-        serial_number=None,
-        age=None,
-        replacement_recommendation=None,
-    )
-
-    assert response.model_number is None
-    assert response.serial_number is None
-    assert response.age is None
-    assert response.replacement_recommendation is None
-
-
-def test_water_heater_analysis_response_accepts_none_fields():
-    response = WaterHeaterAnalysisResponse(
-        id=uuid4(),
-        submission_id=uuid4(),
-        model_number=None,
-        serial_number=None,
-        age=None,
-        replacement_recommendation=None,
-    )
-
-    assert response.model_number is None
-    assert response.serial_number is None
-    assert response.age is None
-    assert response.replacement_recommendation is None
 
 
 # testing the id numbers
-def test_uuid_fields_work():
-    submission_id = uuid4()
-
-    response = HVACAnalysisResponse(
-        id=uuid4(),
-        submission_id=submission_id,
-        model_number=None,
-        serial_number=None,
-        age=None,
-        replacement_recommendation=None,
-    )
-
-    assert response.submission_id == submission_id
 
 
 # making sure it will eventually accept the ai analysis
-def test_hvac_analysis_response_accepts_completed_ai_fields():
-    response = HVACAnalysisResponse(
-        id=uuid4(),
-        submission_id=uuid4(),
-        model_number="ABC123",
-        serial_number="XYZ789",
-        age=12,
-        replacement_recommendation="Recommend replacement",
-    )
-
-    assert response.model_number == "ABC123"
-    assert response.serial_number == "XYZ789"
-    assert response.age == 12
-    assert response.replacement_recommendation == "Recommend replacement"
-
-"""
