@@ -79,9 +79,9 @@ machineForm.addEventListener("submit", async function(event) {
     let submitUrl = "";
 
     if (type === "HVAC") {
-        submitUrl = "/hvac/submit";
+        submitUrl = "/appliances/hvac/submit";
     } else if (type === "Water Heater") {
-        submitUrl = "/water-heater/submit";
+        submitUrl = "/appliances/water-heater/submit";
     } else {
         alert("Please select an appliance type.");
         return;
