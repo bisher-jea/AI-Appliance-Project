@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine, Engine
-from core.schema import Base
-# from dotenv import load_dotenv # loads env
+from src.core.schema import Base
+from dotenv import load_dotenv  # loads env
 import os
 from collections.abc import Generator
 
 # import from schema.py; base contains all table definitions
-# load_dotenv() # loads .env variables into python !!!!!PAY EXTRA CAUTION!!!
+load_dotenv()   # loads .env variables into python !!!!!PAY EXTRA CAUTION!!!
 
 ENGINE = create_engine(os.getenv("DB_URL", "sqlite:///sqlite.db"))
 # creates db connection

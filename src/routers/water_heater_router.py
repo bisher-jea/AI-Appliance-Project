@@ -8,10 +8,10 @@ from starlette.datastructures import FormData
 from fastapi.responses import RedirectResponse
 from urllib.parse import quote
 
-from core.operations import get_db
-from core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
-from core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
-from services.background_tasks import process_water_heater_submission_background
+from src.core.operations import get_db
+from src.core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
+from src.core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
+from src.services.background_tasks import process_water_heater_submission_background
 
 
 water_heater_router = APIRouter(

@@ -4,9 +4,9 @@ from re import Match
 from typing import TypedDict, NotRequired
 from sqlalchemy.orm import Session
 
-from .ocr_service import NameplateFields
-from .recommendation import build_recommendation, ReplacementRecommendation
-from core.schema import WaterHeaterAnalysis
+from src.services.ocr_service import NameplateFields
+from src.services.recommendation import build_recommendation, ReplacementRecommendation
+from src.core.schema import WaterHeaterAnalysis
 
 
 class AgeInfo(TypedDict):
