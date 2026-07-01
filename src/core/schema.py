@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 
 # tables store photo file path, not actual photo
 class HVACSubmission(Base):
-    __tablename__: ClassVar[str]= "hvac_submissions" # pyright: ignore[reportIncompatibleVariableOverride]
+    __tablename__: ClassVar[str] = "hvac_submissions" # pyright: ignore[reportIncompatibleVariableOverride]
 
     id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
     address: Mapped[str] = mapped_column(nullable=False)
@@ -41,9 +41,9 @@ class WaterHeaterSubmission(Base):
 
 # None is used for AI fields because this data is unknown at submission time.
 class HVACAnalysis(Base):
-    __tablename__: ClassVar[str] = "hvac_analysis" # pyright: ignore[reportIncompatibleVariableOverride]
+    __tablename__: ClassVar[str] = "hvac_analysis"   # pyright: ignore[reportIncompatibleVariableOverride]
 
-    id: Mapped[str] = mapped_column(primary_key=True, default=uuid4)
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
 
     submission_id: Mapped[str] = mapped_column(
         ForeignKey("hvac_submissions.id"),
@@ -67,7 +67,7 @@ class HVACAnalysis(Base):
 class WaterHeaterAnalysis(Base):
     __tablename__: ClassVar[str] = "water_heater_analysis" # pyright: ignore[reportIncompatibleVariableOverride]
 
-    id: Mapped[str] = mapped_column(primary_key=True, default=uuid4)
+    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
 
     submission_id: Mapped[str] = mapped_column(
         ForeignKey("water_heater_submissions.id"),

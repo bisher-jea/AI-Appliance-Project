@@ -24,7 +24,7 @@ This project is an AI-powered appliance identification system designed for home 
 2. Run `pip install -e .` at the main project level (`{bisher_project/`)
 3. Create a file named `.env` and enter the following values into it (for a sqlite DB):
 ```
-DB_URL="sqlite:///bisher_project/sqlite.db"
+DB_URL= 
 ```
 4. Run `main.py` in the virtual environment.
 5. Go to `localhost:8000/docs` to test out the API.

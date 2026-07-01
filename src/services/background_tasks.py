@@ -1,19 +1,19 @@
 from sqlalchemy.orm import Session
 
-from core.operations import ENGINE
-from core.schema import (
+from src.core.operations import ENGINE
+from src.core.schema import (
     HVACSubmission,
     WaterHeaterSubmission,
 )
 
-from services.ocr_service import process_nameplate
-from services.hvac_service import (
+from src.services.ocr_service import process_nameplate
+from src.services.hvac_service import (
     decode_hvac_age,
     recommend_hvac_replacement,
     save_hvac_ocr_results,
 )
 
-from services.water_heater_service import (
+from src.services.water_heater_service import (
     decode_water_heater_age,
     recommend_water_heater_replacement,
     save_water_heater_ocr_results,

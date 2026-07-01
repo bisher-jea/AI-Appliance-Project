@@ -4,9 +4,9 @@ from re import Match
 from typing import TypedDict
 from sqlalchemy.orm import Session
 
-from .ocr_service import NameplateFields
-from .recommendation import build_recommendation, ReplacementRecommendation
-from core.schema import HVACAnalysis
+from src.services.ocr_service import NameplateFields
+from src.services.recommendation import build_recommendation, ReplacementRecommendation
+from src.core.schema import HVACAnalysis
 
 
 class AgeInfo(TypedDict, total=False):

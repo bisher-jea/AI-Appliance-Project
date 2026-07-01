@@ -2,8 +2,8 @@ from typing import Annotated, TypedDict
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
-from core.operations import get_db
-from core.schema import (
+from src.core.operations import get_db
+from src.core.schema import (
     HVACAnalysis,
     HVACSubmission,
     WaterHeaterAnalysis,
@@ -12,12 +12,13 @@ from core.schema import (
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="src/templates")
 
 dashboard_router = APIRouter(
     prefix="/dashboard",
     tags=["Dashboard"],
 )
+
 
 class DashboardRow(TypedDict):
     id: str
