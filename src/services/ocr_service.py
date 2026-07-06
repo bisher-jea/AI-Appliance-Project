@@ -4,21 +4,27 @@ import os
 from openai import OpenAI
 from dataclasses import dataclass
 from dotenv import load_dotenv
+import httpx
 
 load_dotenv()
 
 
-def load_api_key(filepath="C:/Users/bishes/Downloads/ella_api_key.txt"):
-    if not os.path.exists(filepath):
+def load_api_key(filepath: str = "C:/Users/bishes/Downloads/ella_api_key.txt")  -> str:
+    if not os.path.isfile(filepath):
         raise FileNotFoundError(f"❌ API key file not found: {filepath}")
-    with open(filepath, "r") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         api_key = f.read().strip()
     if not api_key:
         raise ValueError("❌ API key file is empty. Please add your OpenAI API key.")
+    print("Loading API key from:", filepath)
+    print("Exists:", os.path.isfile(filepath))
     return api_key   
 
 
-client = OpenAI(api_key=load_api_key())
+CERT_PATH = r"C:\Users\bishes\Downloads\openai-ca.pem"
+
+
+client = OpenAI(api_key=load_api_key(), http_client=httpx.Client(verify=CERT_PATH),)
 
 
 @dataclass
