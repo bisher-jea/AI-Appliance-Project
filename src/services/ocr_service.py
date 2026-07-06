@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def load_api_key(filepath="C:/users/bishes/desktop/openai_api_key.txt"):
+def load_api_key(filepath="C:/Users/bishes/Downloads/ella_api_key.txt"):
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"❌ API key file not found: {filepath}")
     with open(filepath, "r") as f:
