@@ -23,7 +23,6 @@ class WaterHeaterSubmissionResponse(BaseModel):
 
 
 class HVACAnalysisResponse(BaseModel):
-    id: str
     submission_id: str
     brand: str | None = None
     model_number: str | None = None   # value can be text or empty
@@ -37,7 +36,6 @@ class HVACAnalysisResponse(BaseModel):
 
 
 class WaterHeaterAnalysisResponse(BaseModel):
-    id: str
     submission_id: str
     brand: str | None = None
     model_number: str | None = None

@@ -1,15 +1,24 @@
-from openai import OpenAI
 import base64
 import json
 import os
-from dotenv import load_dotenv
+from openai import OpenAI
 from dataclasses import dataclass
+from dotenv import load_dotenv
 
 load_dotenv()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+
+def load_api_key(filepath="C:/users/bishes/desktop/openai_api_key.txt"):
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"❌ API key file not found: {filepath}")
+    with open(filepath, "r") as f:
+        api_key = f.read().strip()
+    if not api_key:
+        raise ValueError("❌ API key file is empty. Please add your OpenAI API key.")
+    return api_key   
+
+
+client = OpenAI(api_key=load_api_key())
 
 
 @dataclass
@@ -20,18 +29,18 @@ class NameplateFields:
     subtype: str = ""
     raw_text: str = ""
     needs_human_review: bool = False
-
+     
 
 def encode_image(image_path: str) -> str:
-    with open(image_path, "rb") as f:
-        return base64.b64encode(f.read()).decode("utf-8")
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
 
 
 def process_nameplate(image_path: str) -> NameplateFields:
     image = encode_image(image_path)
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5.4-mini-2026-03-17",
         messages=[
             {
                 "role": "user",
@@ -41,7 +50,8 @@ def process_nameplate(image_path: str) -> NameplateFields:
                         "text": """
 You are reading an HVAC or water heater equipment nameplate.
 
-Extract:
+Extract the following fields:
+
 - brand
 - model_number
 - serial_number
@@ -49,15 +59,28 @@ Extract:
 - raw_text
 - needs_human_review
 
-Subtype must be one of:
-Air Conditioner
-Heat Pump
-Furnace
-Air Handler
-Tank
-Tankless
+Subtype must be exactly one of:
 
-Return ONLY valid JSON.
+- Air Conditioner
+- Heat Pump
+- Furnace
+- Air Handler
+- Tank
+- Tankless
+
+If any value cannot be confidently determined, leave it blank and set
+needs_human_review to true.
+
+Return ONLY valid JSON in this format:
+
+{
+    "brand": "",
+    "model_number": "",
+    "serial_number": "",
+    "subtype": "",
+    "raw_text": "",
+    "needs_human_review": true
+}
 """
                     },
                     {
@@ -77,7 +100,7 @@ Return ONLY valid JSON.
     if content is None:
         return NameplateFields(
             needs_human_review=True,
-            raw_text="OpenAI returned no content."
+            raw_text="No response returned by OpenAI."
         )
 
     try:
@@ -94,5 +117,5 @@ Return ONLY valid JSON.
         serial_number=data.get("serial_number", ""),
         subtype=data.get("subtype", ""),
         raw_text=data.get("raw_text", ""),
-        needs_human_review=data.get("needs_human_review", True),
+        needs_human_review=bool(data.get("needs_human_review", True)),
     )

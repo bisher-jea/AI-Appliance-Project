@@ -43,10 +43,9 @@ class WaterHeaterSubmission(Base):
 class HVACAnalysis(Base):
     __tablename__: ClassVar[str] = "hvac_analysis"   # pyright: ignore[reportIncompatibleVariableOverride]
 
-    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
-
     submission_id: Mapped[str] = mapped_column(
         ForeignKey("hvac_submissions.id"),
+        primary_key=True,
         nullable=False,
         unique=True
     )
@@ -67,10 +66,9 @@ class HVACAnalysis(Base):
 class WaterHeaterAnalysis(Base):
     __tablename__: ClassVar[str] = "water_heater_analysis" # pyright: ignore[reportIncompatibleVariableOverride]
 
-    id: Mapped[str] = mapped_column(primary_key=True, default=lambda: str(uuid4()))
-
     submission_id: Mapped[str] = mapped_column(
         ForeignKey("water_heater_submissions.id"),
+        primary_key=True,
         nullable=False,
         unique=True
     )
