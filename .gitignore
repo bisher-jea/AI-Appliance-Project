@@ -5,6 +5,7 @@ __pycache__/
 .env.*.local
 uploads/
 sqlite.db
+sqlite.db
 .pytest_cache/
 *.sqlite
 *.db
