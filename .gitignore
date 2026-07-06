@@ -8,3 +8,4 @@ sqlite.db
 .pytest_cache/
 *.sqlite
 *.db
+combined.pem
