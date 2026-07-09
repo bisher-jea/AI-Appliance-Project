@@ -238,14 +238,16 @@ def decode_goodman(serial: str) -> AgeInfo | None:
         "M": 2001,
         "N": 2002,
         "P": 2003,
-        "R": 2004,
-        "S": 2005,
-        "T": 2006,
-        "V": 2007,
-        "W": 2008,
-        "X": 2009,
-        "Y": 2010,
-        "Z": 2011,
+        "Q": 2004,
+        "R": 2005,
+        "S": 2006,
+        "T": 2007,
+        "U": 2008,
+        "V": 2009,
+        "W": 2010,
+        "X": 2011,
+        "Y": 2012,
+        "Z": 2013,
     }
 
     match = re.match(r"^\d([A-HJ-NPR-TV-Z])([A-HJ-M])", serial)
@@ -262,6 +264,7 @@ def decode_goodman(serial: str) -> AgeInfo | None:
             }
 
     return None
+
 
 def decode_icp(serial: str) -> AgeInfo | None:
     """_summary_
@@ -404,25 +407,25 @@ def decode_trane(serial: str) -> AgeInfo | None:
         "M": 12,
     }
 
-    year_letter_codes = {
-        "D": 1983,
-        "E": 1984,
-        "F": 1985,
-        "G": 1986,
-        "H": 1987,
-        "J": 1988,
-        "K": 1989,
-        "L": 1990,
-        "M": 1991,
-        "N": 1992,
-        "P": 1993,
-        "R": 1994,
-        "S": 1995,
-        "T": 1996,
-        "V": 1997,
-        "W": 1998,
-        "X": 1999,
-        "Y": 2000,
+    year_codes = {
+        "W": 1983,
+        "X": 1984,
+        "Y": 1985,
+        "S": 1986,
+        "B": 1987,
+        "C": 1988,
+        "D": 1989,
+        "E": 1990,
+        "F": 1991,
+        "G": 1992,
+        "H": 1993,
+        "J": 1994,
+        "K": 1995,
+        "L": 1996,
+        "M": 1997,
+        "N": 1998,
+        "P": 1999,
+        "R": 2000,
         "Z": 2001,
     }
 
@@ -495,7 +498,7 @@ def decode_trane(serial: str) -> AgeInfo | None:
     match = re.match(r"^([A-Z])(\d{2})", serial)
 
     if match:
-        year = year_letter_codes.get(match.group(1))
+        year = year_codes.get(match.group(1))
         week = int(match.group(2))
 
         if year is not None and 1 <= week <= 53:
