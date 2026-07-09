@@ -36,6 +36,35 @@ def calculate_age(manufacture_year: int, manufacture_month: int = 1) -> int:
     return age
 
 
+def decode_american_water_heater(serial: str) -> AgeInfo | None:
+    serial = serial.upper().strip().replace(" ", "")
+
+    # Present: YYWW
+    match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
+
+    if match is None:
+        return None
+
+    year = 2000 + int(match.group(1))
+    week = int(match.group(2))
+
+    if not (2000 <= year <= date.today().year and 1 <= week <= 53):
+        return None
+
+    manufacture_date = datetime.strptime(
+        f"{year}-W{week}-1",
+        "%G-W%V-%u"
+    )
+    month = manufacture_date.month
+
+    return {
+        "manufacture_year": year,
+        "manufacture_month": month,
+        "manufacture_week": week,
+        "age_years": calculate_age(year, month),
+    }
+
+
 def decode_ao_smith(serial: str) -> AgeInfo | None:
     # 3 Options: YYWW, *YYWW, *MYY (pre 2008; month is letter)
     serial = serial.strip().upper()
@@ -195,34 +224,126 @@ def decode_rinnai(serial: str) -> AgeInfo | None:
         AgeInfo | None: _description_
     """
     # YM.**-##### (both year and month are letters; a is 2009, o&p is 2022)
-    serial = serial.upper().strip()
+    match: Match[str] | None = re.match(r"^([A-Z])([A-Z])\.?.*-?\d*", serial)
 
-    if len(serial) < 5:
+    if match is None:
         return None
 
-    try:
-        plant_code = serial[0]
-        year = 2000 + int(serial[1:3])
-        week = int(serial[3:5])
-    except ValueError:
+    year_codes = {
+        "A": 2009,
+        "B": 2010,
+        "C": 2011,
+        "D": 2012,
+        "E": 2013,
+        "F": 2014,
+        "G": 2015,
+        "H": 2016,
+        "J": 2017,
+        "K": 2018,
+        "L": 2019,
+        "M": 2020,
+        "N": 2021,
+        "O": 2022,
+        "P": 2022,
+        "R": 2023,
+        "S": 2024,
+        "T": 2025,
+        "W": 2026,
+    }
+
+    month_codes = {
+        "A": 1,
+        "B": 2,
+        "C": 3,
+        "D": 4,
+        "E": 5,
+        "F": 6,
+        "G": 7,
+        "H": 8,
+        "J": 9,
+        "K": 10,
+        "L": 11,
+        "M": 12,
+    }
+
+    year = year_codes.get(match.group(1))
+    month = month_codes.get(match.group(2))
+
+    if year is None or month is None:
         return None
 
-    if year > date.today().year or not 1 <= week <= 53:
+    if year > date.today().year:
         return None
-
-    manufacture_date = datetime.strptime(
-        f"{year}-W{week}-1",
-        "%Y-W%W-%w"
-    )
-    month = manufacture_date.month
 
     return {
-        "plant_code": plant_code,
         "manufacture_year": year,
         "manufacture_month": month,
-        "manufacture_week": week,
         "age_years": calculate_age(year, month),
     }
+
+
+def decode_state(serial: str) -> AgeInfo | None:
+    # Present: YYWW
+    # Pre-2008: **YYM
+    serial = serial.upper().strip().replace(" ", "")
+    match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
+
+    if match:
+        year = 2000 + int(match.group(1))
+        week = int(match.group(2))
+
+        if 2008 <= year <= date.today().year and 1 <= week <= 53:
+            manufacture_date = datetime.strptime(
+                f"{year}-W{week}-1",
+                "%G-W%V-%u"
+            )
+            month = manufacture_date.month
+
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "manufacture_week": week,
+                "age_years": calculate_age(year, month),
+            }
+
+    month_codes = {
+        "A": 1,
+        "B": 2,
+        "C": 3,
+        "D": 4,
+        "E": 5,
+        "F": 6,
+        "G": 7,
+        "H": 8,
+        "J": 9,
+        "K": 10,
+        "L": 11,
+        "M": 12,
+    }
+
+    match = re.match(r"^..(\d{2})([A-HJ-M])", serial)
+
+    if match:
+        yy = int(match.group(1))
+        month = month_codes.get(match.group(2))
+
+        if month is None:
+            return None
+
+        year = 2000 + yy
+
+        # If somehow the calculated year is after 2007,
+        # assume it is from the 1900s.
+        if year >= 2008:
+            year -= 100
+
+        return {
+            "manufacture_year": year,
+            "manufacture_month": month,
+            "age_years": calculate_age(year, month),
+        }
+
+    return None
 
 
 def decode_water_heater_age_from_brand_serial(
