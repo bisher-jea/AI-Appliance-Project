@@ -37,14 +37,7 @@ def calculate_age(manufacture_year: int, manufacture_month: int = 1) -> int:
 
 
 def decode_ao_smith(serial: str) -> AgeInfo | None:
-    """_summary_
-
-    Args:
-        serial (str): _description_
-
-    Returns:
-        AgeInfo | None: _description_
-    """
+    # 3 Options: YYWW, *YYWW, *MYY (pre 2008; month is letter)
     serial = serial.strip().upper()
 
     if len(serial) < 4:
@@ -57,29 +50,54 @@ def decode_ao_smith(serial: str) -> AgeInfo | None:
         if 2008 <= year <= date.today().year and 1 <= week <= 53:
             manufacture_date = datetime.strptime(
                 f"{year}-W{week}-1",
-                "%Y-W%W-%w"
+                "%G-W%V-%u"
             )
-            month = manufacture_date.month
 
             return {
                 "manufacture_year": year,
-                "manufacture_month": month,
+                "manufacture_month": manufacture_date.month,
                 "manufacture_week": week,
-                "age_years": calculate_age(year, month),
+                "age_years": calculate_age(year, manufacture_date.month),
             }
+    except ValueError:
+        pass
 
-        month = int(serial[0])
-        year = 2000 + int(serial[1:3])
+        # Pre-2008 format: XMYY
 
-        if 1 <= month <= 12 and year < 2008:
+    month_codes = {
+            "A": 1,
+            "B": 2,
+            "C": 3,
+            "D": 4,
+            "E": 5,
+            "F": 6,
+            "G": 7,
+            "H": 8,
+            "J": 9,
+            "K": 10,
+            "L": 11,
+            "M": 12,
+        }
+
+    if len(serial) >= 4:
+        month = month_codes.get(serial[1])
+
+        try:
+            yy = int(serial[2:4])
+        except ValueError:
+            return None
+
+        if month is not None:
+            year = 1900 + yy
+
+            if year > date.today().year:
+                year -= 100
+
             return {
                 "manufacture_year": year,
                 "manufacture_month": month,
                 "age_years": calculate_age(year, month),
-            }
-
-    except ValueError:
-        return None
+                }
 
     return None
 
@@ -93,6 +111,7 @@ def decode_bradford_white(serial: str) -> AgeInfo | None:
     Returns:
         AgeInfo | None: _description_
     """
+    # YM (both are letters; skips i, o, q, u)
     serial = serial.upper().strip()
 
     if len(serial) < 2:
@@ -147,6 +166,7 @@ def decode_rheem_water_heater(serial: str) -> AgeInfo | None:
     Returns:
         AgeInfo | None: _description_
     """
+    #  MMYY (different from the hvacs)
     match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
 
     if match is None:
@@ -174,6 +194,7 @@ def decode_rinnai(serial: str) -> AgeInfo | None:
     Returns:
         AgeInfo | None: _description_
     """
+    # YM.**-##### (both year and month are letters; a is 2009, o&p is 2022)
     serial = serial.upper().strip()
 
     if len(serial) < 5:
@@ -223,6 +244,9 @@ def decode_water_heater_age_from_brand_serial(
     if not brand or not serial:
         return None
 
+    if "AMERICAN STANDARD" in brand:
+        return decode_american_water_heater(serial)
+
     if "AO SMITH" in brand or "A.O. SMITH" in brand:
         return decode_ao_smith(serial)
 
@@ -234,6 +258,9 @@ def decode_water_heater_age_from_brand_serial(
 
     if "RINNAI" in brand:
         return decode_rinnai(serial)
+
+    if "STATE INDUSTRIES" in brand:
+        return decode_state(serial)
 
     return None
 

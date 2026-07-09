@@ -35,28 +35,84 @@ def calculate_age(manufacture_year: int, manufacture_month: int = 1) -> int:
     return age
 
 
-def decode_trane(serial: str) -> AgeInfo | None:
-    """_summary_
+def decode_american_hvac(serial: str) -> AgeInfo | None:
+    # YWW or YYWW or XYYM
+    # 1983-2001: YWW
+    serial = serial.upper().strip().replace(" ", "").replace("-", "")
 
-    Args:
-        serial (str): _description_
+    if len(serial) < 3:
+        return None
 
-    Returns:
-        AgeInfo | None: _description_
-    """
-    serial = serial.upper().strip()
+    month_codes = {
+        "A": 1, "B": 2, "C": 3, "D": 4,
+        "E": 5, "F": 6, "G": 7, "H": 8,
+        "J": 9, "K": 10, "L": 11, "M": 12,
+    }
 
-    match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
+    current_year = date.today().year
 
+    # Present format: XYYM
+    match = re.match(r"^[A-Z](\d{2})([A-Z])", serial)
+    if match:
+        year = 2000 + int(match.group(1))
+        month_letter = match.group(2)
+
+        if year <= current_year and month_letter in month_codes:
+            month = month_codes[month_letter]
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "age_years": calculate_age(year, month),
+            }
+
+    # Present / pre-2001 format: YWW
+    match = re.match(r"^(\d)(\d{2})", serial)
+    if match:
+        year_digit = int(match.group(1))
+        week = int(match.group(2))
+
+        if 1 <= week <= 53:
+            possible_years = [
+                2000 + year_digit,
+                2010 + year_digit,
+                2020 + year_digit,
+                1990 + year_digit,
+            ]
+
+            valid_years = [
+                year for year in possible_years
+                if year <= current_year
+            ]
+
+            if valid_years:
+                year = max(valid_years)
+
+                manufacture_date = datetime.strptime(
+                    f"{year}-W{week}-1",
+                    "%Y-W%W-%w"
+                )
+
+                month = manufacture_date.month
+
+                return {
+                    "manufacture_year": year,
+                    "manufacture_month": month,
+                    "manufacture_week": week,
+                    "age_years": calculate_age(year, month),
+                }
+
+    # Present format: YYW
+    match = re.match(r"^(\d{2})(\d)", serial)
     if match:
         year = 2000 + int(match.group(1))
         week = int(match.group(2))
 
-        if 2010 <= year <= date.today().year and 1 <= week <= 53:
+        if year <= current_year and 1 <= week <= 9:
             manufacture_date = datetime.strptime(
                 f"{year}-W{week}-1",
                 "%Y-W%W-%w"
             )
+
             month = manufacture_date.month
 
             return {
@@ -64,18 +120,6 @@ def decode_trane(serial: str) -> AgeInfo | None:
                 "manufacture_month": month,
                 "manufacture_week": week,
                 "age_years": calculate_age(year, month),
-            }
-
-    match = re.match(r"^[A-Z](\d{2})", serial)
-
-    if match:
-        year = 2000 + int(match.group(1))
-
-        if 2002 <= year <= 2010:
-            return {
-                "manufacture_year": year,
-                "manufacture_month": 1,
-                "age_years": calculate_age(year, 1),
             }
 
     return None
@@ -90,6 +134,7 @@ def decode_carrier(serial: str) -> AgeInfo | None:
     Returns:
         AgeInfo | None: _description_
     """
+    # WWYY
     match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
 
     if match is None:
@@ -115,7 +160,110 @@ def decode_carrier(serial: str) -> AgeInfo | None:
     }
 
 
-def decode_lennox_armstrong(serial: str) -> AgeInfo | None:
+def decode_daikin(serial: str) -> AgeInfo | None:
+    serial = serial.upper().strip()
+
+    # Skip first 4 characters, then read YYMM
+    match: Match[str] | None = re.match(
+        r"^.{4}(\d{2})(\d{2})",
+        serial
+    )
+
+    if match is None:
+        return None
+
+    year = 2000 + int(match.group(1))
+    month = int(match.group(2))
+
+    if year > date.today().year:
+        return None
+
+    if not 1 <= month <= 12:
+        return None
+
+    return {
+        "manufacture_year": year,
+        "manufacture_month": month,
+        "age_years": calculate_age(year, month),
+    }
+
+
+def decode_goodman(serial: str) -> AgeInfo | None:
+    # Present: YYMM
+    # Pre-2012: #YM
+    serial = serial.upper().strip().replace(" ", "")
+
+    month_codes = {
+        "A": 1,
+        "B": 2,
+        "C": 3,
+        "D": 4,
+        "E": 5,
+        "F": 6,
+        "G": 7,
+        "H": 8,
+        "J": 9,
+        "K": 10,
+        "L": 11,
+        "M": 12,
+    }
+
+    # Present: YYMM
+    match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
+
+    if match:
+        year = 2000 + int(match.group(1))
+        month = int(match.group(2))
+
+        if 2012 <= year <= date.today().year and 1 <= month <= 12:
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "age_years": calculate_age(year, month),
+            }
+# Pre-2012: #YM
+    # First char is ignored digit, second is year letter, third is month letter
+    year_codes = {
+        "A": 1990,
+        "B": 1991,
+        "C": 1992,
+        "D": 1993,
+        "E": 1994,
+        "F": 1995,
+        "G": 1996,
+        "H": 1997,
+        "J": 1998,
+        "K": 1999,
+        "L": 2000,
+        "M": 2001,
+        "N": 2002,
+        "P": 2003,
+        "R": 2004,
+        "S": 2005,
+        "T": 2006,
+        "V": 2007,
+        "W": 2008,
+        "X": 2009,
+        "Y": 2010,
+        "Z": 2011,
+    }
+
+    match = re.match(r"^\d([A-HJ-NPR-TV-Z])([A-HJ-M])", serial)
+
+    if match:
+        year = year_codes.get(match.group(1))
+        month = month_codes.get(match.group(2))
+
+        if year is not None and month is not None:
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "age_years": calculate_age(year, month),
+            }
+
+    return None
+
+def decode_icp(serial: str) -> AgeInfo | None:
     """_summary_
 
     Args:
@@ -124,6 +272,43 @@ def decode_lennox_armstrong(serial: str) -> AgeInfo | None:
     Returns:
         AgeInfo | None: _description_
     """
+    # *YYWW
+    serial = serial.upper().strip().replace(" ", "")
+    match = re.match(r"^[A-Z](\d{2})(\d{2})", serial)
+    if match is None:
+        return None
+   
+    year_short = int(match.group(1))
+    week = int(match.group(2))
+
+    current_year_short = date.today().year % 100
+    year = (2000 + year_short) if year_short <= current_year_short else (1900 + year_short)
+
+    # Validate calendar boundaries
+    if year > date.today().year or not (1 <= week <= 53):
+        return None
+
+    # 52 weeks / 12 months = ~4.33 weeks per month
+    month = max(1, min(12, int((week - 1) / 4.33) + 1))
+
+    return {
+        "manufacture_year": year,
+        "manufacture_week": week,
+        "manufacture_month": month,
+        "age_years": calculate_age(year, month),
+    }
+
+
+def decode_lennox(serial: str) -> AgeInfo | None:
+    """_summary_
+
+    Args:
+        serial (str): _description_
+
+    Returns:
+        AgeInfo | None: _description_
+    """
+    # **YYM
     serial = serial.upper().strip()
 
     if len(serial) < 5:
@@ -167,64 +352,27 @@ def decode_lennox_armstrong(serial: str) -> AgeInfo | None:
     }
 
 
-def decode_goodman(serial: str) -> AgeInfo | None:
-    """_summary_
+def decode_rheem_hvac(serial: str) -> AgeInfo | None:
+    serial = serial.upper().strip().replace(" ", "")
 
-    Args:
-        serial (str): _description_
-
-    Returns:
-        AgeInfo | None: _description_
-    """
-    match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
+    # Formats:
+    # ****FWWYY
+    # *WWYY
+    # ####*WWYY
+    match: Match[str] | None = re.search(r"(?:F|\*)(\d{2})(\d{2})", serial)
 
     if match is None:
         return None
 
-    year = 2000 + int(match.group(1))
-    month = int(match.group(2))
-
-    if not 1 <= month <= 12:
-        return None
-
-    return {
-        "manufacture_year": year,
-        "manufacture_month": month,
-        "age_years": calculate_age(year, month),
-    }
-
-
-def decode_rheem_hvac(serial: str) -> AgeInfo | None:
-    """_summary_
-
-    Args:
-        serial (str): _description_
-
-    Returns:
-        AgeInfo | None: _description_
-    """
-    serial = serial.upper().strip().replace(" ", "")
-
-    match: Match[str] | None = re.search(r"\*(\d{2})(\d{2})", serial)
-
-    if match:
-        week = int(match.group(1))
-        year = 2000 + int(match.group(2))
-    else:
-        match = re.match(r"^[A-Z](\d{2})(\d{2})", serial)
-
-        if match is None:
-            return None
-
-        week = int(match.group(1))
-        year = 2000 + int(match.group(2))
+    week = int(match.group(1))
+    year = 2000 + int(match.group(2))
 
     if not 1 <= week <= 53 or year > date.today().year:
         return None
 
     manufacture_date = datetime.strptime(
         f"{year}-W{week}-1",
-        "%Y-W%W-%w"
+        "%G-W%V-%u"
     )
     month = manufacture_date.month
 
@@ -234,6 +382,137 @@ def decode_rheem_hvac(serial: str) -> AgeInfo | None:
         "manufacture_week": week,
         "age_years": calculate_age(year, month),
     }
+
+
+def decode_trane(serial: str) -> AgeInfo | None:
+    # YWW or YYWW or *YYM (month is letter)
+    # 1983-2001: YWW (year is letter)
+    serial = serial.upper().strip().replace(" ", "")
+
+    month_codes = {
+        "A": 1,
+        "B": 2,
+        "C": 3,
+        "D": 4,
+        "E": 5,
+        "F": 6,
+        "G": 7,
+        "H": 8,
+        "J": 9,
+        "K": 10,
+        "L": 11,
+        "M": 12,
+    }
+
+    year_letter_codes = {
+        "D": 1983,
+        "E": 1984,
+        "F": 1985,
+        "G": 1986,
+        "H": 1987,
+        "J": 1988,
+        "K": 1989,
+        "L": 1990,
+        "M": 1991,
+        "N": 1992,
+        "P": 1993,
+        "R": 1994,
+        "S": 1995,
+        "T": 1996,
+        "V": 1997,
+        "W": 1998,
+        "X": 1999,
+        "Y": 2000,
+        "Z": 2001,
+    }
+
+    # Present: YYWW
+    match: Match[str] | None = re.match(r"^(\d{2})(\d{2})", serial)
+
+    if match:
+        year = 2000 + int(match.group(1))
+        week = int(match.group(2))
+
+        if 2010 <= year <= date.today().year and 1 <= week <= 53:
+            manufacture_date = datetime.strptime(
+                f"{year}-W{week}-1",
+                "%G-W%V-%u"
+            )
+            month = manufacture_date.month
+
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "manufacture_week": week,
+                "age_years": calculate_age(year, month),
+            }
+
+    # Present: YWW
+    match = re.match(r"^(\d)(\d{2})", serial)
+
+    if match:
+        year_digit = int(match.group(1))
+        week = int(match.group(2))
+        current_year = date.today().year
+
+        possible_years = [
+            2000 + year_digit,
+            2010 + year_digit,
+            2020 + year_digit,
+        ]
+
+        year = max(y for y in possible_years if y <= current_year)
+
+        if 2010 <= year <= current_year and 1 <= week <= 53:
+            manufacture_date = datetime.strptime(
+                f"{year}-W{week}-1",
+                "%G-W%V-%u"
+            )
+            month = manufacture_date.month
+
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "manufacture_week": week,
+                "age_years": calculate_age(year, month),
+            }
+
+    # Present: *YYM, month is letter
+    match = re.match(r"^[A-Z](\d{2})([A-HJ-M])", serial)
+
+    if match:
+        year = 2000 + int(match.group(1))
+        month = month_codes.get(match.group(2))
+
+        if month is not None and 2002 <= year <= date.today().year:
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "age_years": calculate_age(year, month),
+            }
+
+    # 1983-2001: YWW, year is letter
+    match = re.match(r"^([A-Z])(\d{2})", serial)
+
+    if match:
+        year = year_letter_codes.get(match.group(1))
+        week = int(match.group(2))
+
+        if year is not None and 1 <= week <= 53:
+            manufacture_date = datetime.strptime(
+                f"{year}-W{week}-1",
+                "%G-W%V-%u"
+            )
+            month = manufacture_date.month
+
+            return {
+                "manufacture_year": year,
+                "manufacture_month": month,
+                "manufacture_week": week,
+                "age_years": calculate_age(year, month),
+            }
+
+    return None
 
 
 def decode_hvac_age_from_brand_serial(
@@ -255,21 +534,29 @@ def decode_hvac_age_from_brand_serial(
     if not brand or not serial:
         return None
 
-    if brand in ["TRANE", "AMERICAN STANDARD"]:
-        return decode_trane(serial)
+    if brand in ["AMERICAN STANDARD", "AMERICAN"]:
+        return decode_american_hvac(serial)
 
     if brand in ["CARRIER", "BRYANT", "PAYNE"]:
         return decode_carrier(serial)
 
-    if brand in ["LENNOX", "ARMSTRONG"]:
-        return decode_lennox_armstrong(serial)
+    if brand in ["DAIKIN"]:
+        return decode_daikin(serial)
 
-    if brand in ["GOODMAN", "AMANA", "DAIKIN"]:
+    if brand in ["GOODMAN", "AMANA"]:
         return decode_goodman(serial)
+
+    if brand in ["INTERNATIONAL COMFORT PRODUCTS", "ICP"]:
+        return decode_icp(serial)
+
+    if brand in ["LENNOX"]:
+        return decode_lennox(serial)
 
     if brand in ["RHEEM", "RUUD"]:
         return decode_rheem_hvac(serial)
-
+    
+    if brand in ["TRANE"]:
+        return decode_trane(serial)
     return None
 
 

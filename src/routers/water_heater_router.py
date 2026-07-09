@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, BackgroundTasks
 from sqlalchemy.orm import Session
@@ -44,6 +44,7 @@ async def submit_water_heater(
         RedirectResponse: _description_
     """
     form: FormData = await request.form()
+    print("FORM KEYS:", list(form.keys()))
 
     address_value = form.get("address")
     count_value = form.get("applianceCount")
@@ -63,16 +64,13 @@ async def submit_water_heater(
     for i in range(1, appliance_count + 1):
         unique_id = str(uuid4())
 
-        file_value = form.get(f"waterHeaterNameplate{i}")
+        file = cast(UploadFile, form[f"waterHeaterNameplate{i}"])
 
-        if not isinstance(file_value, UploadFile):
-            raise HTTPException(400, f"Missing waterHeaterNameplate{i}")
-
-        filename = f"{unique_id}_wh_{i}_{file_value.filename}"
+        filename = f"{unique_id}_wh_{i}_{file.filename}"
         path = os.path.join(UPLOAD_FOLDER, filename)
 
         with open(path, "wb") as buffer:
-            shutil.copyfileobj(file_value.file, buffer)
+            shutil.copyfileobj(file.file, buffer)
 
         submission = WaterHeaterSubmission(
             address=address,
