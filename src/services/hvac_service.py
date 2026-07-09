@@ -388,6 +388,14 @@ def decode_rheem_hvac(serial: str) -> AgeInfo | None:
 
 
 def decode_trane(serial: str) -> AgeInfo | None:
+    """_summary_
+
+    Args:
+        serial (str): _description_
+
+    Returns:
+        AgeInfo | None: _description_
+    """
     # YWW or YYWW or *YYM (month is letter)
     # 1983-2001: YWW (year is letter)
     serial = serial.upper().strip().replace(" ", "")
