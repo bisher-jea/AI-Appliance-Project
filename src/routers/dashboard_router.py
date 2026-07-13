@@ -32,6 +32,8 @@ class DashboardRow(TypedDict):
     age: int | None
     replacement_recommendation: str | None
     subtype: str | None
+    needs_human_review: bool
+    review_reason: str | None
 
 
 def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
@@ -69,6 +71,8 @@ def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
             "age": analysis.age if analysis else None,
             "replacement_recommendation": analysis.replacement_recommendation if analysis else None,
             "subtype": analysis.subtype if analysis else None,
+            "needs_human_review": (analysis.needs_human_review if analysis else True),
+            "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
         })
 
     for submission in wh_submissions:
@@ -86,6 +90,8 @@ def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
             "age": analysis.age if analysis else None,
             "replacement_recommendation": analysis.replacement_recommendation if analysis else None,
             "subtype": analysis.subtype if analysis else None,
+            "needs_human_review": (analysis.needs_human_review if analysis else True),
+            "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
         })
 
     return dashboard

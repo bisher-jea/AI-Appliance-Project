@@ -438,6 +438,8 @@ def save_water_heater_ocr_results(
     analysis.subtype = ocr_result.subtype
     analysis.age = age_info.get("age_years") if age_info else None
     analysis.replacement_recommendation = recommendation.recommendation
+    analysis.needs_human_review = ocr_result.needs_human_review
+    analysis.review_reason = ocr_result.review_reason
 
     db.commit()
     db.refresh(analysis)
@@ -483,10 +485,10 @@ def recommend_water_heater_replacement(
 
     subtype = subtype.upper().strip()
 
-    if subtype == "TANK":
+    if subtype in ["TANK", "STORAGE TANK", "CONDENSING GAS TANK"]:
         return build_recommendation(subtype, age, 8, 10)
 
-    if subtype == "TANKLESS":
+    if subtype in ["TANKLESS", "SOLAR"]:
         return build_recommendation(subtype, age, 15, 20)
 
     return ReplacementRecommendation(

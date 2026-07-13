@@ -30,7 +30,8 @@ class HVACAnalysisResponse(BaseModel):
     age: int | None = None
     replacement_recommendation: str | None = None
     subtype: str | None = None
-
+    review_reason: str | None = None
+    
     class Config:
         orm_mode: bool = True
 
@@ -43,6 +44,7 @@ class WaterHeaterAnalysisResponse(BaseModel):
     age: int | None = None
     replacement_recommendation: str | None = None
     subtype: str | None = None
-
+    review_reason: str | None = None
+    
     class Config:
         orm_mode: bool = True

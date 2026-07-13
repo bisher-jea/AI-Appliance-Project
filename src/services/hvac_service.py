@@ -621,6 +621,8 @@ def save_hvac_ocr_results(
     analysis.subtype = ocr_result.subtype
     analysis.age = age_info.get("age_years") if age_info else None
     analysis.replacement_recommendation = recommendation.recommendation
+    analysis.needs_human_review = ocr_result.needs_human_review
+    analysis.review_reason = ocr_result.review_reason
 
     db.commit()
     db.refresh(analysis)
@@ -666,10 +668,10 @@ def recommend_hvac_replacement(
 
     subtype = subtype.upper().strip()
 
-    if subtype in ["AIR CONDITIONER", "HEAT PUMP", "AIR HANDLER"]:
+    if subtype in ["AIR CONDITIONER", "HEAT PUMP", "AIR HANDLER", "PACKAGED UNIT"]:
         return build_recommendation(subtype, age, 12, 15)
 
-    if subtype == "FURNACE":
+    if subtype in ["FURNACE", "GAS FURNACE", "FAN COIL", "DUCTLESS MINI-SPLIT"]:
         return build_recommendation(subtype, age, 15, 20)
 
     return ReplacementRecommendation(

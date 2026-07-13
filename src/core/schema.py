@@ -61,6 +61,13 @@ class HVACAnalysis(Base):
     replacement_recommendation: Mapped[str | None] = mapped_column(
         nullable=True)
     subtype: Mapped[str | None] = mapped_column(nullable=True)
+    needs_human_review: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
+    review_reason: Mapped[str | None] = mapped_column(
+        nullable=True,
+    )
 
 
 class WaterHeaterAnalysis(Base):
@@ -84,3 +91,10 @@ class WaterHeaterAnalysis(Base):
     replacement_recommendation: Mapped[str | None] = mapped_column(
         nullable=True)
     subtype: Mapped[str | None] = mapped_column(nullable=True)
+    needs_human_review: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
+    review_reason: Mapped[str | None] = mapped_column(
+        nullable=True,
+    )

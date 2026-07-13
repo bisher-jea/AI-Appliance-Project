@@ -169,6 +169,22 @@ body {
     font-size: 14px;
 }
 
+.manual-review {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-left: 5px solid #d97706;
+    background-color: #fff7ed;
+    border-radius: 6px;
+}
+
+.manual-review strong {
+    color: #9a3412;
+}
+
+.manual-review p {
+    margin: 0.4rem 0 0;
+}
+
 @media (max-width: 700px) {
     .details-grid {
         grid-template-columns: 1fr;

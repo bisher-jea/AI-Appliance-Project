@@ -60,6 +60,16 @@
                         <strong>Recommendation</strong>
                         <p>{{ appliance.replacement_recommendation or "N/A" }}</p>
                     </div>
+                    {% if appliance.needs_human_review %}
+                        <div class="manual-review">
+                            <strong>Manual Review Needed</strong>
+
+                            <p>
+                                {{ appliance.review_reason
+                                or "Some appliance information could not be verified automatically." }}
+                            </p>
+                        </div>
+                    {% endif %}
                 </article>
             {% else %}
                 <p class="empty-message">No appliances found for this address.</p>
