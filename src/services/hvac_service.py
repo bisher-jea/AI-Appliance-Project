@@ -621,8 +621,8 @@ def save_hvac_ocr_results(
     analysis.subtype = ocr_result.subtype
     analysis.age = age_info.get("age_years") if age_info else None
     analysis.replacement_recommendation = recommendation.recommendation
-    analysis.needs_human_review = ocr_result.needs_human_review
-    analysis.review_reason = ocr_result.review_reason
+    analysis.needs_human_review=recommendation.needs_human_review
+    analysis.review_reason=(recommendation.reason if recommendation.needs_human_review else ocr_result.review_reason)
 
     db.commit()
     db.refresh(analysis)
@@ -647,7 +647,8 @@ def recommend_hvac_replacement(
         return ReplacementRecommendation(
             recommendation="Review",
             priority="Manual Review",
-            reason="Unable to calculate HVAC age.",
+            reason="Unable to calculate HVAC age. Please note American Standard, Rheem, and Trane do not follow a standardized serial number format",
+            needs_human_review=True,
         )
 
     age = age_info.get("age_years")
@@ -657,6 +658,8 @@ def recommend_hvac_replacement(
             recommendation="Review",
             priority="Manual Review",
             reason="Unable to determine HVAC age."
+            needs_human_review=True,
+
         )
 
     if not subtype:
@@ -664,18 +667,20 @@ def recommend_hvac_replacement(
             recommendation="Review",
             priority="Manual Review",
             reason="Missing HVAC subtype.",
+            needs_human_review=True,
         )
 
     subtype = subtype.upper().strip()
 
-    if subtype in ["AIR CONDITIONER", "HEAT PUMP", "AIR HANDLER", "PACKAGED UNIT"]:
+    if subtype in ["AIR CONDITIONER", "HEAT PUMP", "AIR HANDLER", "PACKAGED UNIT", "HEAT PUMP CONDENSER", "HEAT PUMP OUTDOOR UNIT"]:
         return build_recommendation(subtype, age, 12, 15)
 
-    if subtype in ["FURNACE", "GAS FURNACE", "FAN COIL", "DUCTLESS MINI-SPLIT"]:
+    if subtype in ["FURNACE", "GAS FURNACE", "FAN COIL", "DUCTLESS MINI-SPLIT", "FAN COIL UNIT"]:
         return build_recommendation(subtype, age, 15, 20)
 
     return ReplacementRecommendation(
         recommendation="Review",
         priority="Manual Review",
         reason="Unsupported HVAC subtype.",
+        needs_human_review=True,
     )

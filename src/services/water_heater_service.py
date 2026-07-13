@@ -12,7 +12,7 @@ from src.core.schema import WaterHeaterAnalysis
 class AgeInfo(TypedDict):
     manufacture_year: int
     manufacture_month: int
-    age_years: int
+    age_years: int | None
     manufacture_week: NotRequired[int]
     plant_code: NotRequired[str]
 
@@ -438,8 +438,8 @@ def save_water_heater_ocr_results(
     analysis.subtype = ocr_result.subtype
     analysis.age = age_info.get("age_years") if age_info else None
     analysis.replacement_recommendation = recommendation.recommendation
-    analysis.needs_human_review = ocr_result.needs_human_review
-    analysis.review_reason = ocr_result.review_reason
+    analysis.needs_human_review = recommendation.needs_human_review
+    analysis.review_reason = (recommendation.reason if recommendation.needs_human_review else ocr_result.review_reason)
 
     db.commit()
     db.refresh(analysis)
@@ -461,10 +461,11 @@ def recommend_water_heater_replacement(
         ReplacementRecommendation: _description_
     """
     if age_info is None:
+        
         return ReplacementRecommendation(
             recommendation="Review",
             priority="Manual Review",
-            reason="Unable to calculate water heater age.",
+            reason="Unable to calculate water heater age. Please Note AO Smith and Bradford White do not follow a standardized serial number format",
         )
 
     age = age_info.get("age_years")
@@ -474,6 +475,7 @@ def recommend_water_heater_replacement(
             recommendation="Review",
             priority="Manual Review",
             reason="Unable to determine water heater age.",
+            needs_human_review=True
         )
 
     if not subtype:
@@ -481,11 +483,12 @@ def recommend_water_heater_replacement(
             recommendation="Review",
             priority="Manual Review",
             reason="Missing water heater subtype.",
+            needs_human_review=True
         )
 
     subtype = subtype.upper().strip()
 
-    if subtype in ["TANK", "STORAGE TANK", "CONDENSING GAS TANK"]:
+    if subtype in ["TANK", "STORAGE TANK", "CONDENSING GAS TANK", "ELECTRIC STORAGE TANK", "ELECTRIC WATER HEATER"]:
         return build_recommendation(subtype, age, 8, 10)
 
     if subtype in ["TANKLESS", "SOLAR"]:
@@ -495,4 +498,5 @@ def recommend_water_heater_replacement(
         recommendation="Review",
         priority="Manual Review",
         reason="Unsupported water heater subtype.",
+        needs_human_review=True
     )
