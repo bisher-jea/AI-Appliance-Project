@@ -9,8 +9,6 @@ class HVACSubmissionResponse(BaseModel):
     appliance_number: int
     nameplate_photo: str
 
-    class Config:
-        orm_mode: bool = True
     # converts SQLAlchemy objects into JSON responses
 
 
@@ -21,9 +19,6 @@ class WaterHeaterSubmissionResponse(BaseModel):
     address: str
     appliance_number: int
     nameplate_photo: str
-
-    class Config:
-        orm_mode: bool = True
 
 
 class HVACAnalysisResponse(BaseModel):
