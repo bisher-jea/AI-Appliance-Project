@@ -657,7 +657,7 @@ def recommend_hvac_replacement(
         return ReplacementRecommendation(
             recommendation="Review",
             priority="Manual Review",
-            reason="Unable to determine HVAC age."
+            reason="Unable to determine HVAC age.",
             needs_human_review=True,
 
         )
@@ -672,7 +672,7 @@ def recommend_hvac_replacement(
 
     subtype = subtype.upper().strip()
 
-    if subtype in ["AIR CONDITIONER", "HEAT PUMP", "AIR HANDLER", "PACKAGED UNIT", "HEAT PUMP CONDENSER", "HEAT PUMP OUTDOOR UNIT"]:
+    if subtype in ["AIR CONDITIONER", "HEAT PUMP", "AIR HANDLER", "PACKAGED UNIT", "HEAT PUMP CONDENSER", "HEAT PUMP OUTDOOR UNIT", "AIR CONDITIONER / HEAT PUMP OUTDOOR UNIT"]:
         return build_recommendation(subtype, age, 12, 15)
 
     if subtype in ["FURNACE", "GAS FURNACE", "FAN COIL", "DUCTLESS MINI-SPLIT", "FAN COIL UNIT"]:
