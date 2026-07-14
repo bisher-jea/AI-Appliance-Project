@@ -14,7 +14,9 @@ from .routers.dashboard_router import dashboard_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Application startup beginning")
+    print("Creating database tables...")
+    init_tables(ENGINE)
+    print("Database tables ready.")
     yield
 
 app = FastAPI(lifespan=lifespan)

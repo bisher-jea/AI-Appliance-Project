@@ -2,6 +2,7 @@ const applianceCount = document.getElementById("applianceCount");
 const applianceContainer = document.getElementById("applianceContainer");
 const machineForm = document.getElementById("machineForm");
 const applianceType = document.getElementById("applianceType");
+const API_URL = "https://ai-appliance-project.onrender.com";
 
 function createSystemQuestions() {
     const count = Number(applianceCount.value);
@@ -79,9 +80,9 @@ machineForm.addEventListener("submit", async function(event) {
     let submitUrl = "";
 
     if (type === "HVAC") {
-        submitUrl = "http://Ai-Appliance-Project/appliances/hvac/submit";
+        submitUrl = `${API_URL}/appliances/hvac/submit`;
     } else if (type === "Water Heater") {
-        submitUrl = "http://Ai-Appliance-Project/appliances/water-heaters/submit";
+        submitUrl = `${API_URL}/appliances/water-heaters/submit`;
     } else {
         alert("Please select an appliance type.");
         return;
