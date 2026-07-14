@@ -1,7 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class HVACSubmissionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     address: str
     appliance_number: int
@@ -13,6 +15,8 @@ class HVACSubmissionResponse(BaseModel):
 
 
 class WaterHeaterSubmissionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     address: str
     appliance_number: int
@@ -23,6 +27,8 @@ class WaterHeaterSubmissionResponse(BaseModel):
 
 
 class HVACAnalysisResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     submission_id: str
     brand: str | None = None
     model_number: str | None = None   # value can be text or empty
@@ -31,12 +37,11 @@ class HVACAnalysisResponse(BaseModel):
     replacement_recommendation: str | None = None
     subtype: str | None = None
     review_reason: str | None = None
-    
-    class Config:
-        orm_mode: bool = True
 
 
 class WaterHeaterAnalysisResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     submission_id: str
     brand: str | None = None
     model_number: str | None = None
@@ -45,6 +50,4 @@ class WaterHeaterAnalysisResponse(BaseModel):
     replacement_recommendation: str | None = None
     subtype: str | None = None
     review_reason: str | None = None
-    
-    class Config:
-        orm_mode: bool = True
+

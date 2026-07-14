@@ -20,14 +20,13 @@ class NameplateFields:
 os.environ["REQUESTS_CA_BUNDLE"] = r"C:\Users\bishes\Downloads\jea_root.pem.cer"
 
 
-def load_api_key(filepath: str = r"C:\Users\bishes\Downloads/ella_api_key.txt") -> str:
-    if not os.path.isfile(filepath):
-        raise FileNotFoundError(f"❌ API key file not found: {filepath}")
-    with open(filepath, "r", encoding="utf-8") as f:
-        api_key = f.read().strip()
+def load_api_key() -> str:
+    api_key = os.getenv("API_KEY")
     if not api_key:
-        raise ValueError("❌ API key file is empty. Please add your OpenAI API key.")
-    return api_key  
+        raise RuntimeError(
+            "API_KEY environment variable is missing."
+        )
+    return api_key
 
 
 API_KEY = load_api_key()
