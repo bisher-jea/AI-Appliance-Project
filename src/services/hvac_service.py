@@ -621,8 +621,8 @@ def save_hvac_ocr_results(
     analysis.subtype = ocr_result.subtype
     analysis.age = age_info.get("age_years") if age_info else None
     analysis.replacement_recommendation = recommendation.recommendation
-    analysis.needs_human_review=recommendation.needs_human_review
-    analysis.review_reason=(recommendation.reason if recommendation.needs_human_review else ocr_result.review_reason)
+    analysis.needs_human_review = recommendation.needs_human_review
+    analysis.review_reason = (recommendation.reason if recommendation.needs_human_review else ocr_result.review_reason)
 
     db.commit()
     db.refresh(analysis)

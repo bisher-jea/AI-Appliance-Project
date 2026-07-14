@@ -17,9 +17,6 @@ class NameplateFields:
     review_reason: str = ""
 
 
-os.environ["REQUESTS_CA_BUNDLE"] = r"C:\Users\bishes\Downloads\jea_root.pem.cer"
-
-
 def load_api_key() -> str:
     api_key = os.getenv("API_KEY")
     if not api_key:
@@ -36,7 +33,7 @@ HEADERS = {
 }
 API_URL = "https://api.openai.com/v1/responses"
 
-client = OpenAI(api_key=load_api_key(), http_client=httpx.Client(verify=r"C:\Users\bishes\Downloads\jea_root.pem.cer"))
+client = OpenAI(api_key=load_api_key())
 
 
 def encode_image(image_path: str) -> str:
@@ -45,7 +42,7 @@ def encode_image(image_path: str) -> str:
 
 
 def process_nameplate(image_path: str) -> NameplateFields:
-    image = encode_image(image_path)
+    image_base64 = encode_image(image_path)
 
     response = client.chat.completions.create(
         model="gpt-5.4-mini",
@@ -89,7 +86,7 @@ If review is not needed, return an empty review_reason.
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": f"data:image/jpeg;base64,{image}"
+                            "url": f"data:image/jpeg;base64,{image_base64}"
                         }
                     }
                 ]
