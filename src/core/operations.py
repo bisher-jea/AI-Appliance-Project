@@ -1,34 +1,61 @@
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine, Engine
-from src.core.schema import Base
 from dotenv import load_dotenv  # loads env
 import os
 from collections.abc import Generator
+from .schema import Base
+from sqlalchemy.pool import NullPool
 
-# import from schema.py; base contains all table definitions
-load_dotenv()   # loads .env variables into python !!!!!PAY EXTRA CAUTION!!!
+# Import every model so SQLAlchemy registers the tables on Base.metadata.
 
-ENGINE = create_engine(os.getenv("DB_URL", "sqlite:///sqlite.db"))
-# creates db connection
+# Importing the models ensures they are registered with Base.metadata.
+from .schema import (
+    HVACAnalysis,
+    HVACSubmission,
+    WaterHeaterAnalysis,
+    WaterHeaterSubmission,
+)
 
-# creates db session factory
-SESSION_LOCAL = sessionmaker(
-    autocommit=False,     # changes not auto saved
+load_dotenv()
+
+DATABASE_URL = os.environ["DATABASE_URL"]
+
+ENGINE: Engine = create_engine(
+    DATABASE_URL,
+    poolclass=NullPool,
+    connect_args={
+        "connect_timeout": 10,
+        "sslmode": "require",
+    },
+)
+
+SessionLocal = sessionmaker(
+    bind=ENGINE,
+    autocommit=False,
     autoflush=False,
-    bind=ENGINE
 )
 
 
-# creates all tables in schema
+# Creates tables
 def init_tables(engine: Engine) -> None:
+    print("Tables found:", list(Base.metadata.tables.keys()))
+    print("Testing database connection...")
+
+    with engine.connect() as connection:
+        connection.execute(text("SELECT 1"))
+
+    print("Database connection successful.")
+    print("Creating tables...")
+
     Base.metadata.create_all(bind=engine)
 
+    print("Tables created successfully.")
 
-# db session for each request
+
 def get_db() -> Generator[Session, None, None]:
-    with SESSION_LOCAL() as session:
-        yield session
+    db = SessionLocal()
 
-
-if __name__ == "__main__":
-    init_tables(ENGINE)
+    try:
+        yield db
+    finally:
+        db.close()

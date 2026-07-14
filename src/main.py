@@ -6,19 +6,16 @@ from fastapi.templating import Jinja2Templates
 import os
 from contextlib import asynccontextmanager
 
-from .core.operations import init_tables, ENGINE
+from .core.operations import ENGINE, init_tables
 from .routers.hvac_router import hvac_router
 from .routers.water_heater_router import water_heater_router
 from .routers.dashboard_router import dashboard_router
 
 
-# lifespan function
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_tables(ENGINE)
     yield
-
-# creates app
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
