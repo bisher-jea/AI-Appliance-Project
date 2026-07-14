@@ -3,7 +3,6 @@ import json
 import os
 from openai import OpenAI
 from dataclasses import dataclass
-import httpx
 
 
 @dataclass
@@ -36,13 +35,12 @@ API_URL = "https://api.openai.com/v1/responses"
 client = OpenAI(api_key=load_api_key())
 
 
-def encode_image(image_path: str) -> str:
-    with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
+def encode_image(image_bytes: bytes) -> str:
+    return base64.b64encode(image_bytes).decode("utf-8")
 
 
-def process_nameplate(image_path: str) -> NameplateFields:
-    image_base64 = encode_image(image_path)
+def process_nameplate(image_bytes: bytes) -> NameplateFields:
+    image_base64 = encode_image(image_bytes)
 
     response = client.chat.completions.create(
         model="gpt-5.4-mini",

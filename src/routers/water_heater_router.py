@@ -12,7 +12,7 @@ from src.core.operations import get_db
 from src.core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
 from src.core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
 from src.services.background_tasks import process_water_heater_submission_background
-
+from services.storage_service import upload_nameplate
 
 water_heater_router = APIRouter(
     prefix="/appliances/water-heaters",
@@ -29,66 +29,99 @@ async def submit_water_heater(
     db: DbSession,
     background_tasks: BackgroundTasks,
 ) -> RedirectResponse:
-    """_summary_
-
-    Args:
-        request (Request): _description_
-        db (DbSession): _description_
-
-    Raises:
-        HTTPException: _description_
-        HTTPException: _description_
-        HTTPException: _description_
-
-    Returns:
-        RedirectResponse: _description_
-    """
+    """Save water heater submissions and upload photos to Supabase Storage."""
     form: FormData = await request.form()
-    print("FORM KEYS:", list(form.keys()))
 
     address_value = form.get("address")
     count_value = form.get("applianceCount")
 
     if not isinstance(address_value, str):
-        raise HTTPException(400, "Missing address")
+        raise HTTPException(
+            status_code=400,
+            detail="Missing address",
+        )
 
     if not isinstance(count_value, str):
-        raise HTTPException(400, "Missing applianceCount")
-
-    address = address_value
-    appliance_count = int(count_value)
-    saved_count = 0
-
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-    for i in range(1, appliance_count + 1):
-        unique_id = str(uuid4())
-
-        file = cast(UploadFile, form[f"waterHeaterNameplate{i}"])
-
-        filename = f"{unique_id}_wh_{i}_{file.filename}"
-        path = os.path.join(UPLOAD_FOLDER, filename)
-
-        with open(path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        submission = WaterHeaterSubmission(
-            address=address,
-            appliance_number=i,
-            nameplate_photo=path,
+        raise HTTPException(
+            status_code=400,
+            detail="Missing applianceCount",
         )
 
-        db.add(submission)
-        db.flush()
+    address = address_value.strip()
 
+    try:
+        appliance_count = int(count_value)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="applianceCount must be a number",
+        ) from exc
+
+    if not address:
+        raise HTTPException(
+            status_code=400,
+            detail="Address cannot be empty",
+        )
+
+    if appliance_count < 1 or appliance_count > 4:
+        raise HTTPException(
+            status_code=400,
+            detail="applianceCount must be between 1 and 4",
+        )
+
+    submission_ids: list[str] = []
+
+    try:
+        for i in range(1, appliance_count + 1):
+            form_file = form.get(f"waterHeaterNameplate{i}")
+
+            if not isinstance(form_file, UploadFile):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Missing nameplate photo for "
+                        f"water heater {i}"
+                    ),
+                )
+
+            file = cast(UploadFile, form_file)
+            submission_id = str(uuid4())
+
+            storage_path = await upload_nameplate(
+                file=file,
+                appliance_type="water-heaters",
+                submission_id=submission_id,
+            )
+
+            submission = WaterHeaterSubmission(
+                id=submission_id,
+                address=address,
+                appliance_number=i,
+                nameplate_photo=storage_path,
+            )
+
+            db.add(submission)
+            submission_ids.append(submission_id)
+
+        db.commit()
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to save water heater submission",
+        ) from exc
+
+    for submission_id in submission_ids:
         background_tasks.add_task(
             process_water_heater_submission_background,
-            submission.id,
+            submission_id,
         )
-
-        saved_count += 1
-
-    db.commit()
 
     return RedirectResponse(
         url=f"/dashboard/report?address={quote(address)}",

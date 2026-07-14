@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import create_engine, Engine, text
+from sqlalchemy import create_engine, Engine
 from dotenv import load_dotenv  # loads env
 import os
 from collections.abc import Generator
