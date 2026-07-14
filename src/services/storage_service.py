@@ -138,4 +138,3 @@ def delete_nameplate(
     supabase.storage.from_(
         SUPABASE_STORAGE_BUCKET
     ).remove([object_path])
-```
