@@ -1,11 +1,11 @@
-from typing import Annotated, cast
+from typing import NotRequired, TypedDict, Annotated, cast
 from uuid import uuid4
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, BackgroundTasks
+from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, BackgroundTasks
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
-from fastapi.responses import RedirectResponse
 from urllib.parse import quote
-
+from starlette.datastructures import UploadFile as StarletteUploadFile
 from src.core.operations import get_db
 from src.core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
 from src.core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
@@ -17,7 +17,15 @@ water_heater_router = APIRouter(
     tags=["Water Heaters"],
 )
 
-UPLOAD_FOLDER = "uploads"
+
+class AgeInfo(TypedDict):
+    manufacture_year: int
+    manufacture_month: int
+    age_years: int
+    manufacture_week: NotRequired[int]
+    plant_code: NotRequired[str]
+
+
 DbSession = Annotated[Session, Depends(get_db)]
 
 
@@ -73,16 +81,23 @@ async def submit_water_heater(
         for i in range(1, appliance_count + 1):
             form_file = form.get(f"waterHeaterNameplate{i}")
 
-            if not isinstance(form_file, UploadFile):
+            if form_file is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Missing waterHeaterNameplate{i}",
+                )
+
+            if not isinstance(form_file, StarletteUploadFile):
                 raise HTTPException(
                     status_code=400,
                     detail=(
-                        "Missing nameplate photo for "
-                        f"water heater {i}"
+                        f"waterHeaterNameplate{i} is not "
+                        "a valid uploaded file"
                     ),
                 )
 
             file = cast(UploadFile, form_file)
+
             submission_id = str(uuid4())
 
             storage_path = await upload_nameplate(
@@ -100,7 +115,6 @@ async def submit_water_heater(
 
             db.add(submission)
             submission_ids.append(submission_id)
-
         db.commit()
 
     except HTTPException:
@@ -154,15 +168,8 @@ def get_water_heater_submissions(
     )
 
 
-@water_heater_router.get(
-    "/analysis",
-    response_model=list[WaterHeaterAnalysisResponse],
-)
-def get_water_heater_analysis(
-    db: DbSession,
-    limit: int = 100,
-    offset: int = 0,
-) -> list[WaterHeaterAnalysis]:
+@water_heater_router.get("/analysis", response_model=list[WaterHeaterAnalysisResponse],)
+def get_water_heater_analysis(db: DbSession, limit: int = 100, offset: int = 0,) -> list[WaterHeaterAnalysis]:
     """_summary_
 
     Args:
@@ -171,11 +178,7 @@ def get_water_heater_analysis(
         offset (int, optional): _description_. Defaults to 0.
 
     Returns:
-        list[WaterHeaterAnalysis]: _description_
+        list[HVACAnalysis]: _description_
     """
-    return list(
-        db.query(WaterHeaterAnalysis)
-        .limit(limit)
-        .offset(offset)
-        .all()
-    )
+    return list(db.query(WaterHeaterAnalysis).limit(limit).offset(offset).all())
+

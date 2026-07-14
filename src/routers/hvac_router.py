@@ -1,11 +1,11 @@
-from typing import NotRequired, TypedDict, Annotated
+from typing import NotRequired, TypedDict, Annotated, cast
 from uuid import uuid4
 from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from starlette.datastructures import FormData
 from urllib.parse import quote
-
+from starlette.datastructures import UploadFile as StarletteUploadFile
 from src.core.operations import get_db
 from src.core.db import HVACSubmissionResponse, HVACAnalysisResponse
 from src.core.schema import HVACSubmission, HVACAnalysis
@@ -82,14 +82,20 @@ async def submit_hvac(
         for i in range(1, appliance_count + 1):
             form_file = form.get(f"Nameplate{i}")
 
-            if not isinstance(form_file, UploadFile):
+            if form_file is None:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Missing nameplate photo for appliance {i}",
                 )
 
-            file = (UploadFile, form_file)
-            submission_id = str(uuid4())
+            if not isinstance(form_file, StarletteUploadFile):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Nameplate{i} is not a valid uploaded file",
+                )
+
+            file = cast(UploadFile, form_file)
+            submission_id: str = str(uuid4())
 
             storage_path = await upload_nameplate(
                 file=file,
