@@ -18,14 +18,17 @@ from .schema import (
 
 load_dotenv()
 
+
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 ENGINE: Engine = create_engine(
     DATABASE_URL,
     poolclass=NullPool,
+    pool_pre_ping=True,
     connect_args={
         "connect_timeout": 10,
         "sslmode": "require",
+        "prepare_threshold": None,
     },
 )
 
