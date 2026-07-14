@@ -66,6 +66,8 @@ def decode_american_water_heater(serial: str) -> AgeInfo | None:
 
 
 def decode_ao_smith(serial: str) -> AgeInfo | None:
+    # 2008-present: YYWW
+    # Pre-2008: YYMM
     serial = serial.strip().upper()
 
     match = re.search(r"\d{4}", serial)
@@ -73,45 +75,59 @@ def decode_ao_smith(serial: str) -> AgeInfo | None:
     if match is None:
         return None
 
-    date_code = match.group()
+    code = match.group()
 
     try:
-        year_code = int(date_code[:2])
-        week = int(date_code[2:4])
+        yy = int(code[:2])
+        value = int(code[2:])
     except ValueError:
         return None
 
-    if not 1 <= week <= 53:
-        return None
-
     current_year = date.today().year
-    current_two_digit_year = current_year % 100
+    current_two_digit = current_year % 100
 
-    if year_code <= current_two_digit_year:
-        year = 2000 + year_code
+    if yy <= current_two_digit:
+        year = 2000 + yy
     else:
-        year = 1900 + year_code
+        year = 1900 + yy
 
     if year > current_year:
         return None
 
-    try:
+    # 2008+
+    if year >= 2008:
+        week = value
+
+        if not 1 <= week <= 53:
+            return None
+
         manufacture_date = datetime.strptime(
             f"{year}-W{week:02d}-1",
             "%G-W%V-%u",
         )
-    except ValueError:
+
+        return {
+            "manufacture_year": year,
+            "manufacture_month": manufacture_date.month,
+            "manufacture_week": week,
+            "age_years": calculate_age(
+                year,
+                manufacture_date.month,
+            ),
+        }
+
+    # Pre-2008
+    month = value
+
+    if not 1 <= month <= 12:
         return None
 
     return {
         "manufacture_year": year,
-        "manufacture_month": manufacture_date.month,
-        "manufacture_week": week,
-        "age_years": calculate_age(
-            year,
-            manufacture_date.month,
-        ),
+        "manufacture_month": month,
+        "age_years": calculate_age(year, month),
     }
+
 
 def decode_bradford_white(serial: str) -> AgeInfo | None:
     """_summary_
@@ -470,7 +486,7 @@ def recommend_water_heater_replacement(
 
     subtype = subtype.upper().strip()
 
-    if subtype in ["TANK", "STORAGE TANK", "CONDENSING GAS TANK", "ELECTRIC STORAGE TANK", "ELECTRIC WATER HEATER"]:
+    if subtype in ["TANK", "STORAGE TANK", "CONDENSING GAS TANK", "ELECTRIC STORAGE TANK", "ELECTRIC WATER HEATER", "ELECTRIC STORAGE TANK WATER HEATER"]:
         return build_recommendation(subtype, age, 8, 10)
 
     if subtype in ["TANKLESS", "SOLAR"]:
