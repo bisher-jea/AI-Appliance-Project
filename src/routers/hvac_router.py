@@ -17,6 +17,8 @@ hvac_router = APIRouter(
     tags=["HVAC"]
 )
 
+BACKEND_URL = os.environ["BACKEND_URL"].rstrip("/")
+
 
 class AgeInfo(TypedDict):
     manufacture_year: int
@@ -136,7 +138,10 @@ async def submit_hvac(
         )
 
     return RedirectResponse(
-        url=f"/dashboard/report?address={quote(address)}",
+        url=(
+            f"{BACKEND_URL}/dashboard/report"
+            f"?address={quote(address)}"
+        ),
         status_code=303,
     )
 
