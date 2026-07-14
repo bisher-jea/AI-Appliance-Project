@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import create_engine, Engine, text
 from dotenv import load_dotenv  # loads env
 import os
 from collections.abc import Generator
@@ -42,12 +42,6 @@ SessionLocal = sessionmaker(
 # Creates tables
 def init_tables(engine: Engine) -> None:
     print("Tables found:", list(Base.metadata.tables.keys()))
-    print("Testing database connection...")
-
-    with engine.connect() as connection:
-        connection.execute(text("SELECT 1"))
-
-    print("Database connection successful.")
     print("Creating tables...")
 
     Base.metadata.create_all(bind=engine)
