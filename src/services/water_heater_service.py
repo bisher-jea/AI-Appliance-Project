@@ -66,70 +66,52 @@ def decode_american_water_heater(serial: str) -> AgeInfo | None:
 
 
 def decode_ao_smith(serial: str) -> AgeInfo | None:
-    # 3 Options: YYWW, *YYWW, *MYY (pre 2008; month is letter)
     serial = serial.strip().upper()
 
-    if len(serial) < 4:
+    match = re.search(r"\d{4}", serial)
+
+    if match is None:
+        return None
+
+    date_code = match.group()
+
+    try:
+        year_code = int(date_code[:2])
+        week = int(date_code[2:4])
+    except ValueError:
+        return None
+
+    if not 1 <= week <= 53:
+        return None
+
+    current_year = date.today().year
+    current_two_digit_year = current_year % 100
+
+    if year_code <= current_two_digit_year:
+        year = 2000 + year_code
+    else:
+        year = 1900 + year_code
+
+    if year > current_year:
         return None
 
     try:
-        year = 2000 + int(serial[0:2])
-        week = int(serial[2:4])
-
-        if 2008 <= year <= date.today().year and 1 <= week <= 53:
-            manufacture_date = datetime.strptime(
-                f"{year}-W{week}-1",
-                "%G-W%V-%u"
-            )
-
-            return {
-                "manufacture_year": year,
-                "manufacture_month": manufacture_date.month,
-                "manufacture_week": week,
-                "age_years": calculate_age(year, manufacture_date.month),
-            }
+        manufacture_date = datetime.strptime(
+            f"{year}-W{week:02d}-1",
+            "%G-W%V-%u",
+        )
     except ValueError:
-        pass
+        return None
 
-        # Pre-2008 format: XMYY
-
-    month_codes = {
-            "A": 1,
-            "B": 2,
-            "C": 3,
-            "D": 4,
-            "E": 5,
-            "F": 6,
-            "G": 7,
-            "H": 8,
-            "J": 9,
-            "K": 10,
-            "L": 11,
-            "M": 12,
-        }
-
-    if len(serial) >= 4:
-        month = month_codes.get(serial[1])
-
-        try:
-            yy = int(serial[2:4])
-        except ValueError:
-            return None
-
-        if month is not None:
-            year = 1900 + yy
-
-            if year > date.today().year:
-                year -= 100
-
-            return {
-                "manufacture_year": year,
-                "manufacture_month": month,
-                "age_years": calculate_age(year, month),
-                }
-
-    return None
-
+    return {
+        "manufacture_year": year,
+        "manufacture_month": manufacture_date.month,
+        "manufacture_week": week,
+        "age_years": calculate_age(
+            year,
+            manufacture_date.month,
+        ),
+    }
 
 def decode_bradford_white(serial: str) -> AgeInfo | None:
     """_summary_
