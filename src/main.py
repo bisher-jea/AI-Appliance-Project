@@ -14,8 +14,9 @@ from .routers.dashboard_router import dashboard_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_tables(ENGINE)
+    print("Application startup beginning")
     yield
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
