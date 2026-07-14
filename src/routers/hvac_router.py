@@ -10,7 +10,7 @@ from src.core.operations import get_db
 from src.core.db import HVACSubmissionResponse, HVACAnalysisResponse
 from src.core.schema import HVACSubmission, HVACAnalysis
 from src.services.background_tasks import process_hvac_submission_background
-from services.storage_service import upload_nameplate
+from src.services.storage_service import upload_nameplate
 
 hvac_router = APIRouter(
     prefix="/appliances/hvac",

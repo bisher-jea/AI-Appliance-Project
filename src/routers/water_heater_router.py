@@ -1,5 +1,3 @@
-import os
-import shutil
 from typing import Annotated, cast
 from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, BackgroundTasks
@@ -12,7 +10,7 @@ from src.core.operations import get_db
 from src.core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
 from src.core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
 from src.services.background_tasks import process_water_heater_submission_background
-from services.storage_service import upload_nameplate
+from src.services.storage_service import upload_nameplate
 
 water_heater_router = APIRouter(
     prefix="/appliances/water-heaters",
