@@ -11,6 +11,7 @@ from src.core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisRespon
 from src.core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
 from src.services.background_tasks import process_water_heater_submission_background
 from src.services.storage_service import upload_nameplate
+import os
 
 water_heater_router = APIRouter(
     prefix="/appliances/water-heaters",

@@ -11,6 +11,7 @@ from src.core.db import HVACSubmissionResponse, HVACAnalysisResponse
 from src.core.schema import HVACSubmission, HVACAnalysis
 from src.services.background_tasks import process_hvac_submission_background
 from src.services.storage_service import upload_nameplate
+import os
 
 hvac_router = APIRouter(
     prefix="/appliances/hvac",
