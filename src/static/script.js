@@ -71,13 +71,13 @@ function createSystemQuestions() {
 applianceCount.addEventListener("input", createSystemQuestions);
 applianceType.addEventListener("change", createSystemQuestions);
 
-machineForm.addEventListener("submit", async function(event) {
+machineForm.addEventListener("submit", async function (event) {
     event.preventDefault();
 
     const formData = new FormData(machineForm);
     const type = applianceType.value;
 
-    let submitUrl = "";
+    let submitUrl;
 
     if (type === "HVAC") {
         submitUrl = `${API_URL}/appliances/hvac/submit`;
@@ -88,18 +88,53 @@ machineForm.addEventListener("submit", async function(event) {
         return;
     }
 
-    const response = await fetch(submitUrl, {
-        method: "POST",
-        body: formData
-    });
+    const submitButton = machineForm.querySelector(
+        'button[type="submit"], input[type="submit"]'
+    );
 
-    if (response.ok) {
-        const address = encodeURIComponent(formData.get("address"));
-        window.location.href = `/dashboard/report?address=${address}`;
-        return;
+    if (submitButton) {
+        submitButton.disabled = true;
     }
 
-    const errorText = await response.text();
-    console.error(errorText);
-    alert("Submission failed. Check the console or terminal.");
+    try {
+        const response = await fetch(submitUrl, {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+
+            console.error(
+                `Submission failed (${response.status}):`,
+                errorText
+            );
+
+            alert("Submission failed. Check the browser console.");
+            return;
+        }
+
+        const addressValue = formData.get("address");
+
+        if (typeof addressValue !== "string") {
+            throw new Error("The form address is missing.");
+        }
+
+        const address = encodeURIComponent(addressValue);
+
+        window.location.href =
+            `${API_URL}/dashboard/report?address=${address}`;
+
+    } catch (error) {
+        console.error("Submission request failed:", error);
+
+        alert(
+            "The submission could not be completed. " +
+            "Please try again."
+        );
+    } finally {
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
+    }
 });
