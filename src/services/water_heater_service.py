@@ -366,7 +366,7 @@ def decode_water_heater_age_from_brand_serial(
     if "AMERICAN STANDARD" in brand:
         return decode_american_water_heater(serial)
 
-    if "AO SMITH" in brand or "A.O. SMITH" in brand:
+    if "AO SMITH" in brand or "A.O. SMITH" in brand or "A. O. Smith" in brand:
         return decode_ao_smith(serial)
 
     if "BRADFORD WHITE" in brand:
