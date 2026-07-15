@@ -5,9 +5,9 @@ from fastapi.security import HTTPAuthorizationCredentials
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 import requests
-from core.auth import require_admin
-from core.operations import get_db
-from core.schema import Profile
+from src.core.auth import require_admin
+from src.core.operations import get_db
+from src.core.schema import Profile
 
 
 DbSession = Annotated[Session, Depends(get_db)]

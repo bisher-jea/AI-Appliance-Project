@@ -9,8 +9,8 @@ from fastapi.security import (
 from sqlalchemy.orm import Session
 from supabase import Client, create_client
 
-from core.operations import get_db
-from core.schema import Profile
+from .operations import get_db
+from .schema import Profile
 
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
