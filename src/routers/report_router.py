@@ -97,11 +97,6 @@ def build_report_rows(db: DbSession) -> list[ReportRow]:
     return report
 
 
-@report_router.get("/")
-def get_report(db: DbSession) -> list[ReportRow]:
-    return build_report_rows(db)
-
-
 @report_router.get("/report")
 def get_report_page(
     request: Request,
