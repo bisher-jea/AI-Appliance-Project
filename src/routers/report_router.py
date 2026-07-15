@@ -14,13 +14,13 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 templates = Jinja2Templates(directory="src/templates")
 
-dashboard_router = APIRouter(
-    prefix="/dashboard",
-    tags=["Dashboard"],
+report_router = APIRouter(
+    prefix="/report",
+    tags=["report"],
 )
 
 
-class DashboardRow(TypedDict):
+class ReportRow(TypedDict):
     id: str
     appliance_type: str
     address: str
@@ -36,7 +36,7 @@ class DashboardRow(TypedDict):
     review_reason: str | None
 
 
-def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
+def build_report_rows(db: DbSession) -> list[ReportRow]:
     """_summary_
 
     Args:
@@ -54,12 +54,12 @@ def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
     hvac_map = {analysis.submission_id: analysis for analysis in hvac_analysis}
     wh_map = {analysis.submission_id: analysis for analysis in wh_analysis}
 
-    dashboard: list[DashboardRow] = []
+    report: list[ReportRow] = []
 
     for submission in hvac_submissions:
         analysis = hvac_map.get(submission.id)
 
-        dashboard.append({
+        report.append({
             "id": str(submission.id),
             "appliance_type": "HVAC",
             "address": submission.address,
@@ -78,7 +78,7 @@ def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
     for submission in wh_submissions:
         analysis = wh_map.get(submission.id)
 
-        dashboard.append({
+        report.append({
             "id": str(submission.id),
             "appliance_type": "Water Heater",
             "address": submission.address,
@@ -94,15 +94,15 @@ def build_dashboard_rows(db: DbSession) -> list[DashboardRow]:
             "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
         })
 
-    return dashboard
+    return report
 
 
-@dashboard_router.get("/")
-def get_dashboard(db: DbSession) -> list[DashboardRow]:
-    return build_dashboard_rows(db)
+@report_router.get("/")
+def get_report(db: DbSession) -> list[ReportRow]:
+    return build_report_rows(db)
 
 
-@dashboard_router.get("/report")
+@report_router.get("/report")
 def get_report_page(
     request: Request,
     address: str,
@@ -118,7 +118,7 @@ def get_report_page(
     Returns:
         _type_: _description_
     """
-    all_rows = build_dashboard_rows(db)
+    all_rows = build_report_rows(db)
 
     normalized_address = address.strip().lower()
 

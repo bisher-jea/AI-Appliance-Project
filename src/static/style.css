@@ -160,6 +160,20 @@ button:hover {
     font-size: 14px;
 }
 
+.admin-login-link {
+    display: inline-block;
+    margin-top: 15px;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.admin-login-link:hover {
+    color: #AADFF0;
+    text-decoration: underline;
+}
+
 /* CARD ATTRIBUTES */
 .system-card {
     margin-top: 25px;

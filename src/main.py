@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from .core.operations import ENGINE, init_tables
 from .routers.hvac_router import hvac_router
 from .routers.water_heater_router import water_heater_router
-from .routers.dashboard_router import dashboard_router
+from .routers.report_router import report_router
 from .routers.admin_router import admin_router
 
 
@@ -40,8 +40,8 @@ app.mount("/static", StaticFiles(directory="src/static"), name="static")
 
 app.include_router(router=hvac_router)
 app.include_router(router=water_heater_router)
-app.include_router(router=dashboard_router)
-app.include_router(admin_router)
+app.include_router(router=report_router)
+app.include_router(router=admin_router)
 
 
 @app.get("/", response_class=HTMLResponse)
