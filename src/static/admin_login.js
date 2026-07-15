@@ -1,9 +1,11 @@
-import { createClient } from
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
 const supabaseUrl = "https://qhqbzayejaqyvkylqrwm.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocWJ6YXllamFxeXZreWxxcndtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjYxMjQsImV4cCI6MjA5OTYwMjEyNH0.flsc3asxZpoWproDenaby1epHDBM2TCCWKSciQCihl0"; 
 // both url and anon key can be in frontend, serivce key cannot
+
+import { createClient } from
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const loginForm =
     document.getElementById("loginForm");
