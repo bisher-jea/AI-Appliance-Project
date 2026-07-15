@@ -3,6 +3,8 @@ const applianceContainer = document.getElementById("applianceContainer");
 const machineForm = document.getElementById("machineForm");
 const applianceType = document.getElementById("applianceType");
 
+const API_URL = "https://ai-appliance-project.onrender.com";
+
 function createSystemQuestions() {
     const count = Number(applianceCount.value);
     const type = applianceType.value;
