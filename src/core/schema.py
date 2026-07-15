@@ -126,9 +126,16 @@ class Profile(Base):
 class ReviewLog(Base):
     __tablename__ = "review_log"
 
-    submission_id: Mapped[str] = mapped_column(
+    id: Mapped[str] = mapped_column(
         primary_key=True,
         default=lambda: str(uuid4()),
+    )
+
+    submission_id: Mapped[str] = mapped_column(
+        nullable=False,
+    )
+
+    submission_type: Mapped[str] = mapped_column(
         nullable=False,
     )
 
