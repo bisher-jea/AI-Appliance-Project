@@ -37,7 +37,19 @@ async function loadDashboard() {
             return;
         }
 
+        // temp test endpt
         const response = await fetch(
+            "https://ai-appliance-project.onrender.com/admin/test",
+            {
+                headers: {
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+            }
+        );
+        const result = await response.json();
+        console.log(result);
+
+        /*const response = await fetch(
             `${API_URL}/admin/submissions`,
             {
                 method: "GET",
@@ -47,8 +59,7 @@ async function loadDashboard() {
                     "Content-Type": "application/json",
                 },
             }
-        );
-
+        );*/
         if (
             response.status === 401 ||
             response.status === 403

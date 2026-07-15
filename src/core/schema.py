@@ -124,7 +124,13 @@ class Profile(Base):
 
 
 class ReviewLog(Base):
-    __tablename__ = "review log"
+    __tablename__ = "review_log"
+
+    submission_id: Mapped[str] = mapped_column(
+        primary_key=True,
+        default=lambda: str(uuid4()),
+        nullable=False,
+    )
 
     review_status: Mapped[str] = mapped_column(
         default="pending",
@@ -132,6 +138,7 @@ class ReviewLog(Base):
     )
 
     reviewed_by: Mapped[str | None] = mapped_column(
+        ForeignKey("profiles.id"),
         nullable=True,
     )
 

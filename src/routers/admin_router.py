@@ -30,10 +30,21 @@ POST   /admin/water-heaters/{analysis_id}/recalculate
 POST   /admin/submissions/{submission_id}/complete-review
 """
 
-
+"""
 @admin_router.get("/submissions")
 def get_admin_submissions(
     db: DbSession,
     admin: AdminProfile,
 ) -> list[dict[str, object]]:
-    return build_dashboard_rows(db)
+    return build_dashboard_rows(db)"""
+
+
+@admin_router.get("/test")
+def test_admin_access(
+    admin: AdminProfile,
+) -> dict[str, str]:
+    return {
+        "message": "Admin access granted.",
+        "user_id": str(admin.id),
+        "role": admin.role,
+    }
