@@ -463,7 +463,7 @@ def recommend_water_heater_replacement(
         return ReplacementRecommendation(
             recommendation="Review",
             priority="Manual Review",
-            reason="Unable to calculate water heater age. Please Note AO Smith and Bradford White do not follow a standardized serial number format",
+            reason="Unable to calculate water heater age."
         )
 
     age = age_info.get("age_years")

@@ -3,6 +3,7 @@ from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey
 from uuid import uuid4
 from typing import ClassVar
+from datetime import datetime, UTC
 
 
 # parent base class, used to track all models
@@ -96,5 +97,48 @@ class WaterHeaterAnalysis(Base):
         nullable=False,
     )
     review_reason: Mapped[str | None] = mapped_column(
+        nullable=True,
+    )
+
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id: Mapped[str] = mapped_column(
+        primary_key=True
+    )
+
+    email: Mapped[str] = mapped_column(
+        nullable=False,
+        unique=True
+    )
+
+    role: Mapped[str] = mapped_column(
+        nullable=False,
+        default="viewer"
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        default=datetime.now(UTC)
+    )
+
+
+class ReviewLog(Base):
+    __tablename__ = "review log"
+
+    review_status: Mapped[str] = mapped_column(
+        default="pending",
+        nullable=False,
+    )
+
+    reviewed_by: Mapped[str | None] = mapped_column(
+        nullable=True,
+    )
+
+    reviewed_at: Mapped[datetime | None] = mapped_column(
+        nullable=True,
+    )
+
+    review_notes: Mapped[str | None] = mapped_column(
         nullable=True,
     )
