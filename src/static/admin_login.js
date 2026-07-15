@@ -5,43 +5,54 @@ const supabaseUrl = "https://qhqbzayejaqyvkylqrwm.supabase.co";
 const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocWJ6YXllamFxeXZreWxxcndtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMjYxMjQsImV4cCI6MjA5OTYwMjEyNH0.flsc3asxZpoWproDenaby1epHDBM2TCCWKSciQCihl0"; 
 // both url and anon key can be in frontend, serivce key cannot
 
+const loginForm =
+    document.getElementById("adminLoginForm");
 
-const supabase = createClient(
-    supabaseUrl,
-    supabaseAnonKey
-);
-
-const loginForm = document.getElementById("adminLoginForm");
-const loginError = document.getElementById("loginError");
-const logoutform = document.getElementById("logoutButton")
+const loginError =
+    document.getElementById("loginError");
 
 loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     loginError.textContent = "";
 
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+    const email =
+        document.getElementById("email").value.trim();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-    });
+    const password =
+        document.getElementById("password").value;
 
-    if (error) {
-        loginError.textContent = "Invalid email or password.";
-        return;
+    try {
+        const { data, error } =
+            await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+        if (error) {
+            console.error("Supabase login error:", error);
+
+            loginError.textContent =
+                error.message;
+
+            return;
+        }
+
+        if (!data.session) {
+            loginError.textContent =
+                "Login succeeded, but no session was created.";
+
+            return;
+        }
+
+        console.log("Login successful:", data.user);
+
+        window.location.href =
+            "./admin_dashboard.html";
+    } catch (error) {
+        console.error("Unexpected login error:", error);
+
+        loginError.textContent =
+            "Unable to connect to the login service.";
     }
-
-    if (!data.session) {
-        loginError.textContent = "Unable to create login session.";
-        return;
-    }
-
-    window.location.href = "./admin-dashboard.html";
 });
-
-logoutform.addEventListener("click", async () => {
-        await supabase.auth.signOut();
-        window.location.href = "./admin_login.html";
-    });
