@@ -124,7 +124,7 @@ machineForm.addEventListener("submit", async function (event) {
         const address = encodeURIComponent(addressValue);
 
         window.location.href =
-            `${API_URL}/report?address=${address}`;
+            `${API_URL}/report/?address=${address}`;
 
     } catch (error) {
         console.error("Submission request failed:", error);

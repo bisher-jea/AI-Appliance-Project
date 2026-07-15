@@ -6,7 +6,7 @@ const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // both url and anon key can be in frontend, serivce key cannot
 
 const loginForm =
-    document.getElementById("adminLoginForm");
+    document.getElementById("loginForm");
 
 const loginError =
     document.getElementById("loginError");
