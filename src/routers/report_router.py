@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="src/templates")
 
 report_router = APIRouter(
     prefix="/report",
-    tags=["report"],
+    tags=["Report"],
 )
 
 
@@ -97,7 +97,7 @@ def build_report_rows(db: DbSession) -> list[ReportRow]:
     return report
 
 
-@report_router.get("/report")
+@report_router.get("/")
 def get_report_page(
     request: Request,
     address: str,
