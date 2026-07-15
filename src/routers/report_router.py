@@ -1,3 +1,4 @@
+from starlette.templating import _TemplateResponse
 from typing import Annotated, TypedDict
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
@@ -34,6 +35,7 @@ class ReportRow(TypedDict):
     subtype: str | None
     needs_human_review: bool
     review_reason: str | None
+    analysis_complete: bool
 
 
 def build_report_rows(db: DbSession) -> list[ReportRow]:
@@ -73,6 +75,7 @@ def build_report_rows(db: DbSession) -> list[ReportRow]:
             "subtype": analysis.subtype if analysis else None,
             "needs_human_review": (analysis.needs_human_review if analysis else True),
             "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
+            "analysis_complete": analysis is not None,
         })
 
     for submission in wh_submissions:
@@ -92,6 +95,7 @@ def build_report_rows(db: DbSession) -> list[ReportRow]:
             "subtype": analysis.subtype if analysis else None,
             "needs_human_review": (analysis.needs_human_review if analysis else True),
             "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
+            "analysis_complete": analysis is not None,
         })
 
     return report
@@ -136,53 +140,23 @@ def get_report_page(
 def report_status(
     address: str,
     db: DbSession,
-):
-    hvac_submissions = (
-        db.query(HVACSubmission)
-        .filter(HVACSubmission.address == address)
-        .all()
-    )
-    wh_submissions = (
-        db.query(WaterHeaterSubmission)
-        .filter(WaterHeaterSubmission.address == address)
-        .all()
-    )
-    hvac_analysis_count = (
-        db.query(HVACAnalysis)
-        .join(
-            HVACSubmission,
-            HVACAnalysis.submission_id ==
-            HVACSubmission.id
-        )
-        .filter(
-            HVACSubmission.address == address
-        )
-        .count()
-    )
-    wh_analysis_count = (
-        db.query(WaterHeaterAnalysis)
-        .join(
-            WaterHeaterSubmission,
-            WaterHeaterAnalysis.submission_id ==
-            WaterHeaterSubmission.id
-        )
-        .filter(
-            WaterHeaterSubmission.address == address
-        )
-        .count()
-    )
-    expected = (
-        len(hvac_submissions)
-        + len(wh_submissions)
+) -> dict[str, bool]:
+    all_rows = build_report_rows(db)
+
+    normalized_address = address.strip().lower()
+
+    report_rows = [
+        row
+        for row in all_rows
+        if row["address"].strip().lower() == normalized_address
+    ]
+
+    if not report_rows:
+        return {"complete": False}
+
+    complete = all(
+        row.get("analysis_complete", False)
+        for row in report_rows
     )
 
-    completed = (
-        hvac_analysis_count
-        + wh_analysis_count
-    )
-    complete = (completed == expected)
-    return {
-        "complete": complete,
-        "completed": completed,
-        "expected": expected,
-    }
+    return {"complete": complete}

@@ -1,28 +1,54 @@
-async function checkStatus(){
+const params = new URLSearchParams(window.location.search);
+const address = params.get("address");
 
-    const response = await fetch(
-        `/report/status?address=${address}`
-    );
-
-    const status = await response.json();
-
-    if(status.complete){
-
-        document.getElementById("loadingState").style.display="none";
-
-        document.getElementById("completeState").style.display="block";
-
-        document.getElementById("reportContent").style.display="block";
-
-        loadReport();
-
-    }
-    else{
-
-        setTimeout(checkStatus,2000);
-
+async function checkStatus() {
+    if (!address) {
+        console.error("No address was found in the report URL.");
+        return;
     }
 
+    try {
+        const response = await fetch(
+            `/report/status?address=${encodeURIComponent(address)}`
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+
+            console.error(
+                `Status check failed (${response.status}):`,
+                errorText
+            );
+
+            setTimeout(checkStatus, 2000);
+            return;
+        }
+
+        const status = await response.json();
+
+        if (status.complete) {
+            document.getElementById("loadingState").style.display =
+                "none";
+
+            document.getElementById("completeState").style.display =
+                "block";
+
+            document.getElementById("reportContent").style.display =
+                "block";
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+
+            return;
+        }
+
+        setTimeout(checkStatus, 2000);
+    } catch (error) {
+        console.error("Unable to check analysis status:", error);
+
+        setTimeout(checkStatus, 3000);
+    }
 }
 
 checkStatus();

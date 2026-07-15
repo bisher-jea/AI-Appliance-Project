@@ -18,32 +18,34 @@
             <p>Total Appliances: {{ appliances|length }}</p>
         </section>
 
-        <div id="analysisStatus" class="analysis-status">
-
-            <div id="loadingState">
-
+        <div
+            id="analysisStatus"
+            class="analysis-status"
+            data-complete="{{ 'true' if analysis_complete else 'false' }}"
+        >
+            <div
+                id="loadingState"
+                {% if analysis_complete %}style="display:none;"{% endif %}
+            >
                 <div class="spinner"></div>
 
                 <h2>Analyzing Your Appliance...</h2>
 
                 <p>
-                    We're reading your appliance nameplates and
-                    calculating age and replacement recommendations.
-                    This usually takes 30-60 seconds.
+                    We're reading your appliance nameplates and calculating
+                    age and replacement recommendations. This usually takes
+                    30–60 seconds.
                 </p>
-
             </div>
 
-            <div id="completeState" style="display:none;">
-
+            <div
+                id="completeState"
+                {% if not analysis_complete %}style="display:none;"{% endif %}
+            >
                 <h2>✅ Analysis Complete!</h2>
 
-                <p>
-                    Your inspection report is ready below.
-                </p>
-
+                <p>Your inspection report is ready below.</p>
             </div>
-
         </div>
         <div id="reportContent" style="display:none;">
             <section class="appliance-list">
