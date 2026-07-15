@@ -18,63 +18,92 @@
             <p>Total Appliances: {{ appliances|length }}</p>
         </section>
 
-        <section class="appliance-list">
-            {% for appliance in appliances %}
-                <article class="appliance-card">
-                    <div class="card-header">
-                        <h2>{{ appliance.subtype or appliance.appliance_type }}</h2>
-                        <span>Appliance #{{ appliance.appliance_number }}</span>
-                    </div>
+        <div id="analysisStatus" class="analysis-status">
 
-                    <div class="details-grid">
-                        <div>
-                            <strong>Brand</strong>
-                            <p>{{ appliance.brand or "N/A" }}</p>
+            <div id="loadingState">
+
+                <div class="spinner"></div>
+
+                <h2>Analyzing Your Appliance...</h2>
+
+                <p>
+                    We're reading your appliance nameplates and
+                    calculating age and replacement recommendations.
+                    This usually takes 30-60 seconds.
+                </p>
+
+            </div>
+
+            <div id="completeState" style="display:none;">
+
+                <h2>✅ Analysis Complete!</h2>
+
+                <p>
+                    Your inspection report is ready below.
+                </p>
+
+            </div>
+
+        </div>
+        <div id="reportContent" style="display:none;">
+            <section class="appliance-list">
+                {% for appliance in appliances %}
+                    <article class="appliance-card">
+                        <div class="card-header">
+                            <h2>{{ appliance.subtype or appliance.appliance_type }}</h2>
+                            <span>Appliance #{{ appliance.appliance_number }}</span>
                         </div>
 
-                        <div>
-                            <strong>Model No.</strong>
-                            <p>{{ appliance.model_number or "N/A" }}</p>
+                        <div class="details-grid">
+                            <div>
+                                <strong>Brand</strong>
+                                <p>{{ appliance.brand or "N/A" }}</p>
+                            </div>
+
+                            <div>
+                                <strong>Model No.</strong>
+                                <p>{{ appliance.model_number or "N/A" }}</p>
+                            </div>
+
+                            <div>
+                                <strong>Serial No.</strong>
+                                <p>{{ appliance.serial_number or "N/A" }}</p>
+                            </div>
+
+                            <div>
+                                <strong>Age</strong>
+                                <p>{{ appliance.age or "N/A" }} years</p>
+                            </div>
                         </div>
 
-                        <div>
-                            <strong>Serial No.</strong>
-                            <p>{{ appliance.serial_number or "N/A" }}</p>
+                        <div class="recommendation
+                            {% if appliance.replacement_recommendation == 'Replace' %}
+                                recommendation-replace
+                            {% elif appliance.replacement_recommendation == 'Monitor' %}
+                                recommendation-monitor
+                            {% elif appliance.replacement_recommendation == 'No Replacement Needed' %}
+                                recommendation-good
+                            {% endif %}
+                        ">
+                            <strong>Recommendation</strong>
+                            <p>{{ appliance.replacement_recommendation or "N/A" }}</p>
                         </div>
+                        {% if appliance.needs_human_review %}
+                            <div class="manual-review">
+                                <strong>Manual Review Needed</strong>
 
-                        <div>
-                            <strong>Age</strong>
-                            <p>{{ appliance.age or "N/A" }} years</p>
-                        </div>
-                    </div>
-
-                    <div class="recommendation
-                        {% if appliance.replacement_recommendation == 'Replace' %}
-                            recommendation-replace
-                        {% elif appliance.replacement_recommendation == 'Monitor' %}
-                            recommendation-monitor
-                        {% elif appliance.replacement_recommendation == 'No Replacement Needed' %}
-                            recommendation-good
+                                <p>
+                                    {{ appliance.review_reason
+                                    or "Some appliance information could not be verified automatically." }}
+                                </p>
+                            </div>
                         {% endif %}
-                    ">
-                        <strong>Recommendation</strong>
-                        <p>{{ appliance.replacement_recommendation or "N/A" }}</p>
-                    </div>
-                    {% if appliance.needs_human_review %}
-                        <div class="manual-review">
-                            <strong>Manual Review Needed</strong>
-
-                            <p>
-                                {{ appliance.review_reason
-                                or "Some appliance information could not be verified automatically." }}
-                            </p>
-                        </div>
-                    {% endif %}
-                </article>
-            {% else %}
-                <p class="empty-message">No appliances found for this address.</p>
-            {% endfor %}
-        </section>
+                    </article>
+                {% else %}
+                    <p class="empty-message">No appliances found for this address.</p>
+                {% endfor %}
+            </section>
+        </div>
     </main>
     <div class="report-actions">
 
@@ -87,6 +116,7 @@
         </a>
 
     </div>
+    <script src="./static/report.js"></script>
 </body>
 
 

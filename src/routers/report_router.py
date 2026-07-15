@@ -136,3 +136,58 @@ def get_report_page(
         },
     )
 
+
+@report_router.get("/status")
+def report_status(
+    address: str,
+    db: DbSession,
+):
+    hvac_submissions = (
+        db.query(HVACSubmission)
+        .filter(HVACSubmission.address == address)
+        .all()
+    )
+    wh_submissions = (
+        db.query(WaterHeaterSubmission)
+        .filter(WaterHeaterSubmission.address == address)
+        .all()
+    )
+    hvac_analysis_count = (
+        db.query(HVACAnalysis)
+        .join(
+            HVACSubmission,
+            HVACAnalysis.submission_id ==
+            HVACSubmission.id
+        )
+        .filter(
+            HVACSubmission.address == address
+        )
+        .count()
+    )
+    wh_analysis_count = (
+        db.query(WaterHeaterAnalysis)
+        .join(
+            WaterHeaterSubmission,
+            WaterHeaterAnalysis.submission_id ==
+            WaterHeaterSubmission.id
+        )
+        .filter(
+            WaterHeaterSubmission.address == address
+        )
+        .count()
+    )
+    expected = (
+        len(hvac_submissions)
+        + len(wh_submissions)
+    )
+
+    completed = (
+        hvac_analysis_count
+        + wh_analysis_count
+    )
+    complete = (completed == expected)
+    return {
+        "complete": complete,
+        "completed": completed,
+        "expected": expected,
+    }
