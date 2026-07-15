@@ -214,6 +214,19 @@ button:hover {
     color: #012169;
 }
 
+.back-link {
+    display: block;
+    margin-top: 20px;
+    color: #012169;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
 /* ---------- MODAL ---------- */
 
 .modal {
