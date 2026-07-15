@@ -37,7 +37,7 @@ async def submit_hvac(
     request: Request,
     db: DbSession,
     background_tasks: BackgroundTasks,
-) -> RedirectResponse:
+) -> dict[str, str]:
     """Save HVAC submissions and upload nameplate photos to Supabase Storage."""
     form: FormData = await request.form()
 
@@ -138,13 +138,10 @@ async def submit_hvac(
             submission_id,
         )
 
-    return RedirectResponse(
-        url=(
-            f"{BACKEND_URL}/dashboard/report"
-            f"?address={quote(address)}"
-        ),
-        status_code=303,
-    )
+    return {
+    "message": "Submission received.",
+    "address": address,
+}
 
 
 @hvac_router.get("", response_model=list[HVACSubmissionResponse],)
