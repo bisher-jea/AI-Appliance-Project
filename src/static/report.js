@@ -27,19 +27,19 @@ async function checkStatus() {
         const status = await response.json();
 
         if (status.complete) {
+            const reloadKey = `reportReloaded:${address}`;
+
+            if (!sessionStorage.getItem(reloadKey)) {
+                sessionStorage.setItem(reloadKey, "true");
+                window.location.reload();
+                return;
+            }
             document.getElementById("loadingState").style.display =
                 "none";
-
             document.getElementById("completeState").style.display =
                 "block";
-
             document.getElementById("reportContent").style.display =
                 "block";
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-
             return;
         }
 
