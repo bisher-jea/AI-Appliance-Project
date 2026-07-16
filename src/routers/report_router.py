@@ -38,31 +38,16 @@ class ReportRow(TypedDict):
     analysis_complete: bool
 
 
-def build_report_rows(db: DbSession) -> list[ReportRow]:
-    """_summary_
+def build_report_rows(db: Session) -> list[ReportRow]:
+    rows: list[ReportRow] = []
 
-    Args:
-        db (DbSession): _description_
-
-    Returns:
-        list[DashboardRow]: _description_
-    """
     hvac_submissions = db.query(HVACSubmission).all()
-    wh_submissions = db.query(WaterHeaterSubmission).all()
-
-    hvac_analysis = db.query(HVACAnalysis).all()
-    wh_analysis = db.query(WaterHeaterAnalysis).all()
-
-    hvac_map = {analysis.submission_id: analysis for analysis in hvac_analysis}
-    wh_map = {analysis.submission_id: analysis for analysis in wh_analysis}
-
-    report: list[ReportRow] = []
 
     for submission in hvac_submissions:
-        analysis = hvac_map.get(submission.id)
+        analysis = submission.analysis
 
-        report.append({
-            "id": str(submission.id),
+        row: ReportRow = {
+            "id": submission.id,
             "appliance_type": "HVAC",
             "address": submission.address,
             "appliance_number": submission.appliance_number,
@@ -71,18 +56,36 @@ def build_report_rows(db: DbSession) -> list[ReportRow]:
             "model_number": analysis.model_number if analysis else None,
             "serial_number": analysis.serial_number if analysis else None,
             "age": analysis.age if analysis else None,
-            "replacement_recommendation": analysis.replacement_recommendation if analysis else None,
+            "replacement_recommendation": (
+                analysis.replacement_recommendation
+                if analysis
+                else None
+            ),
             "subtype": analysis.subtype if analysis else None,
-            "needs_human_review": (analysis.needs_human_review if analysis else True),
-            "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
+            "needs_human_review": (
+                bool(analysis.needs_human_review)
+                if analysis
+                else False
+            ),
+            "review_reason": (
+                analysis.review_reason
+                if analysis
+                else None
+            ),
             "analysis_complete": analysis is not None,
-        })
+        }
 
-    for submission in wh_submissions:
-        analysis = wh_map.get(submission.id)
+        rows.append(row)
 
-        report.append({
-            "id": str(submission.id),
+    water_heater_submissions = (
+        db.query(WaterHeaterSubmission).all()
+    )
+
+    for submission in water_heater_submissions:
+        analysis = submission.analysis
+
+        row: ReportRow = {
+            "id": submission.id,
             "appliance_type": "Water Heater",
             "address": submission.address,
             "appliance_number": submission.appliance_number,
@@ -91,14 +94,28 @@ def build_report_rows(db: DbSession) -> list[ReportRow]:
             "model_number": analysis.model_number if analysis else None,
             "serial_number": analysis.serial_number if analysis else None,
             "age": analysis.age if analysis else None,
-            "replacement_recommendation": analysis.replacement_recommendation if analysis else None,
+            "replacement_recommendation": (
+                analysis.replacement_recommendation
+                if analysis
+                else None
+            ),
             "subtype": analysis.subtype if analysis else None,
-            "needs_human_review": (analysis.needs_human_review if analysis else True),
-            "review_reason": (analysis.review_reason if analysis else "Analysis has not completed."),
+            "needs_human_review": (
+                bool(analysis.needs_human_review)
+                if analysis
+                else False
+            ),
+            "review_reason": (
+                analysis.review_reason
+                if analysis
+                else None
+            ),
             "analysis_complete": analysis is not None,
-        })
+        }
 
-    return report
+        rows.append(row)
+
+    return rows
 
 
 @report_router.get("/")
@@ -136,27 +153,50 @@ def get_report_page(
     )
 
 
-@report_router.get("/status")
-def report_status(
+@report_router.get("")
+def show_report(
+    request: Request,
     address: str,
-    db: DbSession,
-) -> dict[str, bool]:
-    all_rows = build_report_rows(db)
-
-    normalized_address = address.strip().lower()
-
-    report_rows = [
-        row
-        for row in all_rows
-        if row["address"].strip().lower() == normalized_address
-    ]
-
-    if not report_rows:
-        return {"complete": False}
-
-    complete = all(
-        row.get("analysis_complete", False)
-        for row in report_rows
+    batch_id: str | None = None,
+    completed: bool = False,
+    db: Session = Depends(get_db),
+):
+    hvac_query = db.query(HVACSubmission).filter(
+        HVACSubmission.address == address
     )
 
-    return {"complete": complete}
+    water_heater_query = db.query(
+        WaterHeaterSubmission
+    ).filter(
+        WaterHeaterSubmission.address == address
+    )
+
+    if batch_id:
+        hvac_query = hvac_query.filter(
+            HVACSubmission.batch_id == batch_id
+        )
+
+        water_heater_query = water_heater_query.filter(
+            WaterHeaterSubmission.batch_id == batch_id
+        )
+
+    hvac_submissions = hvac_query.all()
+    water_heater_submissions = water_heater_query.all()
+
+    rows: list[ReportRow] = build_report_rows(db)
+
+    all_complete = bool(rows) and all(
+        row["analysis_complete"]
+        for row in rows
+    )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="report.html",
+        context={
+            "address": address,
+            "batch_id": batch_id,
+            "rows": rows,
+            "all_complete": all_complete,
+        },
+    )

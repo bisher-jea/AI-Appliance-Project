@@ -1,11 +1,9 @@
-from typing import NotRequired, TypedDict, Annotated, cast
+from typing import NotRequired, TypedDict, Annotated
 from uuid import uuid4
 from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from starlette.datastructures import FormData
 from urllib.parse import quote
-from starlette.datastructures import UploadFile as StarletteUploadFile
 from src.core.operations import get_db
 from src.core.db import WaterHeaterSubmissionResponse, WaterHeaterAnalysisResponse
 from src.core.schema import WaterHeaterSubmission, WaterHeaterAnalysis
@@ -33,116 +31,80 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 @water_heater_router.post("/submit")
-async def submit_water_heater(
+async def submit_hvac(
     request: Request,
-    db: DbSession,
     background_tasks: BackgroundTasks,
-) -> dict[str, str]:
-    """Save water heater submissions and upload photos to Supabase Storage."""
-    form: FormData = await request.form()
+    db: Session = Depends(get_db),
+) -> RedirectResponse:
+    form = await request.form()
 
     address_value = form.get("address")
-    count_value = form.get("applianceCount")
+    appliance_count_value = form.get("applianceCount")
 
     if not isinstance(address_value, str):
         raise HTTPException(
             status_code=400,
-            detail="Missing address",
+            detail="Address is missing or invalid.",
         )
 
-    if not isinstance(count_value, str):
+    if not isinstance(appliance_count_value, str):
         raise HTTPException(
             status_code=400,
-            detail="Missing applianceCount",
+            detail="Appliance count is missing or invalid.",
         )
+
+    try:
+        appliance_count = int(appliance_count_value)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail="Appliance count must be a whole number.",
+        ) from error
 
     address = address_value.strip()
+    batch_id = str(uuid4())
 
-    try:
-        appliance_count = int(count_value)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail="applianceCount must be a number",
-        ) from exc
+    for i in range(1, appliance_count + 1):
+        file_value = form.get(f"Nameplate{i}")
 
-    if not address:
-        raise HTTPException(
-            status_code=400,
-            detail="Address cannot be empty",
-        )
-
-    if appliance_count < 1 or appliance_count > 4:
-        raise HTTPException(
-            status_code=400,
-            detail="applianceCount must be between 1 and 4",
-        )
-
-    submission_ids: list[str] = []
-
-    try:
-        for i in range(1, appliance_count + 1):
-            form_file = form.get(f"waterHeaterNameplate{i}")
-
-            if form_file is None:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Missing waterHeaterNameplate{i}",
-                )
-
-            if not isinstance(form_file, StarletteUploadFile):
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"waterHeaterNameplate{i} is not "
-                        "a valid uploaded file"
-                    ),
-                )
-
-            file = cast(UploadFile, form_file)
-
-            submission_id = str(uuid4())
-
-            storage_path = await upload_nameplate(
-                file=file,
-                appliance_type="water-heaters",
-                submission_id=submission_id,
+        if not isinstance(file_value, UploadFile):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nameplate photo {i} is missing or invalid.",
             )
 
-            submission = WaterHeaterSubmission(
-                id=submission_id,
-                address=address,
-                appliance_number=i,
-                nameplate_photo=storage_path,
-            )
+        submission_id = str(uuid4())
 
-            db.add(submission)
-            submission_ids.append(submission_id)
+        storage_key = await upload_nameplate(
+            file=file_value,
+            appliance_type="water heater",
+            submission_id=submission_id,
+        )
+
+        submission = WaterHeaterSubmission(
+            id=submission_id,
+            address=address,
+            appliance_number=i,
+            nameplate_photo=storage_key,
+            batch_id=batch_id,
+        )
+
+        db.add(submission)
         db.commit()
 
-    except HTTPException:
-        db.rollback()
-        raise
-
-    except Exception as exc:
-        db.rollback()
-
-        raise HTTPException(
-            status_code=500,
-            detail="Unable to save water heater submission",
-        ) from exc
-
-    for submission_id in submission_ids:
         background_tasks.add_task(
             process_water_heater_submission_background,
             submission_id,
         )
 
-    return {
-        "message": "Submission received.",
-        "address": address,
-    }
-
+    return RedirectResponse(
+        url=(
+            f"/report?"
+            f"address={quote(address)}&"
+            f"batch_id={quote(batch_id)}"
+        ),
+        status_code=303,
+    )
 
 @water_heater_router.get(
     "",

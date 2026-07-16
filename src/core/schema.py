@@ -19,6 +19,10 @@ class HVACSubmission(Base):
     address: Mapped[str] = mapped_column(nullable=False)
     appliance_number: Mapped[int] = mapped_column(nullable=False)
     nameplate_photo: Mapped[str] = mapped_column(nullable=False)
+    batch_id: Mapped[str | None] = mapped_column(
+        nullable=False,
+        index=True,
+    )
 
     analysis: Mapped[HVACAnalysis | None] = relationship(
         back_populates="submission",
@@ -33,6 +37,10 @@ class WaterHeaterSubmission(Base):
     address: Mapped[str] = mapped_column(nullable=False)
     appliance_number: Mapped[int] = mapped_column(nullable=False)
     nameplate_photo: Mapped[str] = mapped_column(nullable=False)
+    batch_id: Mapped[str | None] = mapped_column(
+        nullable=False,
+        index=True,
+    )
 
     analysis: Mapped[WaterHeaterAnalysis | None] = relationship(
         back_populates="submission",
