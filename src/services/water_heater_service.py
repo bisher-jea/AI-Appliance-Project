@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.services.ocr_service import NameplateFields
 from src.services.recommendation import build_recommendation, ReplacementRecommendation
-from src.core.schema import WaterHeaterAnalysis
+from src.core.models import WaterHeaterAnalysis
 
 
 class AgeInfo(TypedDict):
@@ -438,6 +438,7 @@ def save_water_heater_ocr_results(
     analysis.replacement_recommendation = recommendation.recommendation
     analysis.needs_human_review = recommendation.needs_human_review
     analysis.review_reason = (recommendation.reason if recommendation.needs_human_review else ocr_result.review_reason)
+    analysis.analysis_complete = True
 
     db.commit()
     db.refresh(analysis)

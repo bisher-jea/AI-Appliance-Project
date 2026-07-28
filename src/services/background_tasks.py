@@ -1,7 +1,8 @@
+
 from sqlalchemy.orm import Session
 
-from src.core.operations import SessionLocal
-from src.core.schema import (
+from src.core.database import SessionLocal
+from src.core.models import (
     HVACSubmission,
     WaterHeaterSubmission,
 )
@@ -11,7 +12,9 @@ from src.services.hvac_service import (
     save_hvac_ocr_results,
 )
 from src.services.ocr_service import process_nameplate
-from src.services.storage_service import download_nameplate
+from src.services.storage_service import (
+    download_nameplate,
+)
 from src.services.water_heater_service import (
     decode_water_heater_age,
     recommend_water_heater_replacement,
@@ -22,31 +25,55 @@ from src.services.water_heater_service import (
 def process_hvac_submission_background(
     submission_id: str,
 ) -> None:
-    """Process an HVAC submission after it has been saved."""
+    """
+    Process an HVAC submission after it has been saved.
+
+    The nameplate image is loaded from the directory configured
+    by the UPLOAD_DIRECTORY environment variable.
+    """
     db: Session = SessionLocal()
 
     try:
         submission = (
             db.query(HVACSubmission)
-            .filter(HVACSubmission.id == submission_id)
+            .filter(
+                HVACSubmission.id == submission_id
+            )
             .first()
         )
 
         if submission is None:
             print(
-                f"HVAC submission not found: {submission_id}"
+                "HVAC submission not found:",
+                submission_id,
             )
             return
 
-        image_bytes = download_nameplate(
-            str(submission.nameplate_photo)
+        object_path = str(
+            submission.nameplate_photo
         )
+
+        print(
+            "Loading HVAC nameplate:",
+            object_path,
+        )
+
+        image_bytes = download_nameplate(
+            object_path
+        )
+
+        if not image_bytes:
+            raise ValueError(
+                "The HVAC nameplate image is empty."
+            )
 
         ocr_result = process_nameplate(
             image_bytes=image_bytes
         )
 
-        age_info = decode_hvac_age(ocr_result)
+        age_info = decode_hvac_age(
+            ocr_result
+        )
 
         recommendation = recommend_hvac_replacement(
             subtype=ocr_result.subtype,
@@ -55,7 +82,9 @@ def process_hvac_submission_background(
 
         save_hvac_ocr_results(
             db=db,
-            submission_id=str(submission.id),
+            submission_id=str(
+                submission.id
+            ),
             ocr_result=ocr_result,
             age_info=age_info,
             recommendation=recommendation,
@@ -64,7 +93,8 @@ def process_hvac_submission_background(
         db.commit()
 
         print(
-            f"HVAC submission processed: {submission_id}"
+            "HVAC submission processed:",
+            submission_id,
         )
 
     except Exception as exc:
@@ -73,7 +103,8 @@ def process_hvac_submission_background(
         print(
             "HVAC background task failed:",
             submission_id,
-            repr(exc),
+            type(exc).__name__,
+            str(exc),
         )
 
     finally:
@@ -83,13 +114,21 @@ def process_hvac_submission_background(
 def process_water_heater_submission_background(
     submission_id: str,
 ) -> None:
-    """Process a water-heater submission after it has been saved."""
+    """
+    Process a water-heater submission after it has been saved.
+
+    The nameplate image is loaded from the directory configured
+    by the UPLOAD_DIRECTORY environment variable.
+    """
     db: Session = SessionLocal()
 
     try:
         submission = (
             db.query(WaterHeaterSubmission)
-            .filter(WaterHeaterSubmission.id == submission_id)
+            .filter(
+                WaterHeaterSubmission.id
+                == submission_id
+            )
             .first()
         )
 
@@ -100,9 +139,23 @@ def process_water_heater_submission_background(
             )
             return
 
-        image_bytes = download_nameplate(
-            str(submission.nameplate_photo)
+        object_path = str(
+            submission.nameplate_photo
         )
+
+        print(
+            "Loading water-heater nameplate:",
+            object_path,
+        )
+
+        image_bytes = download_nameplate(
+            object_path
+        )
+
+        if not image_bytes:
+            raise ValueError(
+                "The water-heater nameplate image is empty."
+            )
 
         ocr_result = process_nameplate(
             image_bytes=image_bytes
@@ -112,14 +165,18 @@ def process_water_heater_submission_background(
             ocr_result
         )
 
-        recommendation = recommend_water_heater_replacement(
-            subtype=ocr_result.subtype,
-            age_info=age_info,
+        recommendation = (
+            recommend_water_heater_replacement(
+                subtype=ocr_result.subtype,
+                age_info=age_info,
+            )
         )
 
         save_water_heater_ocr_results(
             db=db,
-            submission_id=str(submission.id),
+            submission_id=str(
+                submission.id
+            ),
             ocr_result=ocr_result,
             age_info=age_info,
             recommendation=recommendation,
@@ -138,7 +195,8 @@ def process_water_heater_submission_background(
         print(
             "Water heater background task failed:",
             submission_id,
-            repr(exc),
+            type(exc).__name__,
+            str(exc),
         )
 
     finally:

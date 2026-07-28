@@ -1,3 +1,4 @@
+"""
 from typing import Annotated
 from fastapi.security import HTTPBearer
 
@@ -20,7 +21,7 @@ admin_router = APIRouter(
     dependencies=[Depends(require_admin)],
 )
 
-"""
+
 GET    /admin/submissions
 GET    /admin/submissions/{submission_id}
 PATCH  /admin/hvac/{analysis_id}
@@ -28,15 +29,13 @@ PATCH  /admin/water-heaters/{analysis_id}
 POST   /admin/hvac/{analysis_id}/recalculate
 POST   /admin/water-heaters/{analysis_id}/recalculate
 POST   /admin/submissions/{submission_id}/complete-review
-"""
 
-"""
 @admin_router.get("/submissions")
 def get_admin_submissions(
     db: DbSession,
     admin: AdminProfile,
 ) -> list[dict[str, object]]:
-    return build_dashboard_rows(db)"""
+    return build_dashboard_rows(db)
 
 
 @admin_router.get("/test")
@@ -48,3 +47,4 @@ def test_admin_access(
         "user_id": str(admin.id),
         "role": admin.role,
     }
+"""

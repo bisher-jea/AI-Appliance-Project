@@ -3,33 +3,30 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import UploadFile
-from supabase import Client, create_client
 
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_ROLE_KEY = os.getenv(
-    "SUPABASE_SERVICE_ROLE_KEY"
-)
-SUPABASE_STORAGE_BUCKET = os.getenv(
-    "SUPABASE_STORAGE_BUCKET",
-    "appliance-nameplates",
-)
-
-if not SUPABASE_URL:
-    raise RuntimeError(
-        "SUPABASE_URL environment variable is missing."
+UPLOAD_DIRECTORY = Path(
+    os.getenv(
+        "UPLOAD_DIRECTORY",
+        r"G:/Customer Relationship/Customer Analytics/Ella/uploads",
     )
+).resolve()
 
-if not SUPABASE_SERVICE_ROLE_KEY:
-    raise RuntimeError(
-        "SUPABASE_SERVICE_ROLE_KEY environment variable is missing."
-    )
-
-
-supabase: Client = create_client(
-    SUPABASE_URL,
-    SUPABASE_SERVICE_ROLE_KEY,
+UPLOAD_DIRECTORY.mkdir(
+    parents=True,
+    exist_ok=True,
 )
+
+
+def _safe_appliance_type(
+    appliance_type: str,
+) -> str:
+    return (
+        appliance_type.strip()
+        .lower()
+        .replace(" ", "_")
+        .replace("-", "_")
+    )
 
 
 async def upload_nameplate(
@@ -38,21 +35,31 @@ async def upload_nameplate(
     submission_id: str,
 ) -> str:
     """
-    Upload a nameplate image to Supabase Storage.
+    Save a nameplate image inside the locally mounted
+    Google Drive folder.
 
-    Returns the permanent Storage object path.
+    Returns the relative storage key saved in the database.
     """
     image_bytes = await file.read()
 
     if not image_bytes:
-        raise ValueError("The uploaded image is empty.")
+        raise ValueError(
+            "The uploaded image is empty."
+        )
 
-    content_type = file.content_type or "image/jpeg"
+    content_type = (
+        file.content_type
+        or "image/jpeg"
+    )
 
     if not content_type.startswith("image/"):
-        raise ValueError("The uploaded file must be an image.")
+        raise ValueError(
+            "The uploaded file must be an image."
+        )
 
-    extension = Path(file.filename or "").suffix.lower()
+    extension = Path(
+        file.filename or ""
+    ).suffix.lower()
 
     allowed_extensions = {
         ".jpg",
@@ -65,39 +72,85 @@ async def upload_nameplate(
     if extension not in allowed_extensions:
         extension = ".jpg"
 
-    object_path = (
-        f"{appliance_type}/"
-        f"{submission_id}/"
-        f"{uuid4()}{extension}"
+    appliance_folder = _safe_appliance_type(
+        appliance_type
     )
 
-    supabase.storage.from_(
-        SUPABASE_STORAGE_BUCKET
-    ).upload(
-        path=object_path,
-        file=image_bytes,
-        file_options={
-            "content-type": content_type,
-            "upsert": "false",
-        },
+    relative_path = Path(
+        appliance_folder,
+        submission_id,
+        f"{uuid4()}{extension}",
     )
 
-    return object_path
+    destination = (
+        UPLOAD_DIRECTORY
+        / relative_path
+    )
+
+    destination.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    destination.write_bytes(
+        image_bytes
+    )
+
+    return relative_path.as_posix()
 
 
 def download_nameplate(
     object_path: str,
 ) -> bytes:
     """
-    Download a private image from Supabase Storage.
+    Read a nameplate image from the locally mounted
+    Google Drive folder.
     """
-    image_bytes = (
-        supabase.storage
-        .from_(SUPABASE_STORAGE_BUCKET)
-        .download(object_path)
-    )
+    full_path = (
+        UPLOAD_DIRECTORY
+        / Path(object_path)
+    ).resolve()
 
-    return bytes(image_bytes)
+    try:
+        full_path.relative_to(
+            UPLOAD_DIRECTORY
+        )
+    except ValueError as error:
+        raise ValueError(
+            "Invalid nameplate object path."
+        ) from error
+
+    if not full_path.is_file():
+        raise FileNotFoundError(
+            f"Nameplate image was not found: "
+            f"{object_path}"
+        )
+
+    return full_path.read_bytes()
+
+
+def get_nameplate_path(
+    object_path: str,
+) -> Path:
+    """
+    Return the complete local filesystem path.
+    Useful for OCR tools that require a file path.
+    """
+    full_path = (
+        UPLOAD_DIRECTORY
+        / Path(object_path)
+    ).resolve()
+
+    try:
+        full_path.relative_to(
+            UPLOAD_DIRECTORY
+        )
+    except ValueError as error:
+        raise ValueError(
+            "Invalid nameplate object path."
+        ) from error
+
+    return full_path
 
 
 def create_nameplate_signed_url(
@@ -105,36 +158,29 @@ def create_nameplate_signed_url(
     expires_in: int = 3600,
 ) -> str:
     """
-    Create a temporary URL for a private image.
+    Local Google Drive storage does not use signed URLs.
+
+    Returns the application's local uploads URL.
     """
-    response = (
-        supabase.storage
-        .from_(SUPABASE_STORAGE_BUCKET)
-        .create_signed_url(
-            path=object_path,
-            expires_in=expires_in,
-        )
-    )
+    del expires_in
 
-    signed_url = response.get("signedURL")
+    normalized_path = Path(
+        object_path
+    ).as_posix()
 
-    if not isinstance(signed_url, str):
-        signed_url = response.get("signedUrl")
-
-    if not isinstance(signed_url, str):
-        raise RuntimeError(
-            "Supabase did not return a signed URL."
-        )
-
-    return signed_url
+    return f"/uploads/{normalized_path}"
 
 
 def delete_nameplate(
     object_path: str,
 ) -> None:
     """
-    Delete an image from Supabase Storage.
+    Delete an image from the locally mounted
+    Google Drive folder.
     """
-    supabase.storage.from_(
-        SUPABASE_STORAGE_BUCKET
-    ).remove([object_path])
+    full_path = get_nameplate_path(
+        object_path
+    )
+
+    if full_path.exists():
+        full_path.unlink()

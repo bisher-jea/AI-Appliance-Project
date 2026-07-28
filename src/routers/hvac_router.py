@@ -1,22 +1,22 @@
-from typing import NotRequired, TypedDict, Annotated
+from typing import NotRequired, TypedDict, Annotated, cast
 from uuid import uuid4
 from fastapi import APIRouter, Depends, Request, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from urllib.parse import quote
-from src.core.operations import get_db
-from src.core.db import HVACSubmissionResponse, HVACAnalysisResponse
-from src.core.schema import HVACSubmission, HVACAnalysis
+from urllib.parse import urlencode
+from src.core.database import get_db
+from src.core.schemas import HVACSubmissionResponse, HVACAnalysisResponse
+from src.core.models import HVACSubmission, HVACAnalysis
 from src.services.background_tasks import process_hvac_submission_background
 from src.services.storage_service import upload_nameplate
-import os
+from starlette.datastructures import (
+    UploadFile as StarletteUploadFile,
+)
 
 hvac_router = APIRouter(
     prefix="/appliances/hvac",
     tags=["HVAC"]
 )
-
-BACKEND_URL = os.environ["BACKEND_URL"].rstrip("/")
 
 
 class AgeInfo(TypedDict):
@@ -67,16 +67,27 @@ async def submit_hvac(
     for i in range(1, appliance_count + 1):
         file_value = form.get(f"Nameplate{i}")
 
-        if not isinstance(file_value, UploadFile):
+        if not isinstance(
+            file_value,
+            StarletteUploadFile,
+        ):
             raise HTTPException(
                 status_code=400,
-                detail=f"Nameplate photo {i} is missing or invalid.",
+                detail=(
+                    f"Nameplate photo {i} "
+                    "is missing or invalid."
+                ),
             )
+
+        nameplate_file = cast(
+            UploadFile,
+            file_value,
+        )
 
         submission_id = str(uuid4())
 
         storage_key = await upload_nameplate(
-            file=file_value,
+            file=nameplate_file,
             appliance_type="hvac",
             submission_id=submission_id,
         )
@@ -92,17 +103,24 @@ async def submit_hvac(
         db.add(submission)
         db.commit()
 
+        print(
+            "ADDING BACKGROUND TASK:",
+            submission_id,
+        )
         background_tasks.add_task(
             process_hvac_submission_background,
             submission_id,
         )
 
+    query = urlencode(
+        {
+            "address": address,
+            "batch_id": batch_id,
+        }
+    )
+
     return RedirectResponse(
-        url=(
-            f"/report?"
-            f"address={quote(address)}&"
-            f"batch_id={quote(batch_id)}"
-        ),
+        url=f"/report/?{query}",
         status_code=303,
     )
 

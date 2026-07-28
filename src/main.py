@@ -5,18 +5,21 @@ from fastapi.staticfiles import StaticFiles    # serve uploaded image files
 from fastapi.templating import Jinja2Templates
 import os
 from contextlib import asynccontextmanager
-
-from .core.operations import ENGINE, init_tables
+from dotenv import load_dotenv
+from .core.database import engine, init_tables
 from .routers.hvac_router import hvac_router
 from .routers.water_heater_router import water_heater_router
 from .routers.report_router import report_router
-from .routers.admin_router import admin_router
+from pathlib import Path
+
+
+load_dotenv()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Creating database tables...")
-    init_tables(ENGINE)
+    init_tables(engine)
     print("Database tables ready.")
     yield
 
@@ -30,18 +33,28 @@ app.add_middleware(
     allow_credentials=True,
 )
 
-templates = Jinja2Templates(directory="src/templates")
+templates = Jinja2Templates(directory="frontend/templates")
+
+UPLOAD_DIRECTORY = Path(
+    os.getenv(
+        "UPLOAD_DIRECTORY",
+        r"G:/Customer Relationship/Customer Analytics/Ella/uploads",
+    )
+).resolve()
 
 # uploaded files go to uploads and makes uploaded files viewable thru BE
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_FOLDER), name="uploads")
-app.mount("/static", StaticFiles(directory="src/static"), name="static")
+app.mount(
+    "/uploads",
+    StaticFiles(directory=str(UPLOAD_DIRECTORY)),
+    name="uploads",
+)
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 app.include_router(router=hvac_router)
 app.include_router(router=water_heater_router)
 app.include_router(router=report_router)
-app.include_router(router=admin_router)
 
 
 @app.get("/", response_class=HTMLResponse)

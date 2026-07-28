@@ -38,7 +38,7 @@
 
     <h1>Appliance Information</h1>
 
-    <form id="machineForm" action="https://Ai-Appliance-Project/appliances/hvac/submit" method="post" enctype="multipart/form-data">
+    <form id="machineForm"  method="post" enctype="multipart/form-data">
         <label for="address">Street Address:</label>
         <input type="text" id="address" name="address" required>
 
@@ -72,15 +72,16 @@
     <footer class="footer">
         <img src="./static/images/white_jea.png" alt="JEA Logo" class="footer-logo">
 
-        <div class="footer-text">
-            <h3>ApplianceIQ</h3>
+        <div class="report-actions">
 
-            <a
-                href="./admin_login.html"
-                class="admin-login-link"
-            >
+            <a href="/" class="action-btn">
+                Submit Another Appliance
+            </a>
+
+            <a href="/admin_login.html" class="action-btn secondary-btn">
                 Admin Login
             </a>
+
         </div>
     </footer>
 

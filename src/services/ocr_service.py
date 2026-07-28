@@ -1,8 +1,12 @@
-import base64
-import json
-import os
 from openai import OpenAI
 from dataclasses import dataclass
+import base64
+import json
+import httpx
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @dataclass
@@ -16,6 +20,9 @@ class NameplateFields:
     review_reason: str = ""
 
 
+os.environ["REQUESTS_CA_BUNDLE"] = r"C:\Users\bishes\Downloads\jea_root.pem.cer"
+
+
 def load_api_key() -> str:
     api_key = os.getenv("API_KEY")
     if not api_key:
@@ -26,13 +33,15 @@ def load_api_key() -> str:
 
 
 API_KEY = load_api_key()
+
 HEADERS = {
     "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json",
 }
 API_URL = "https://api.openai.com/v1/responses"
 
-client = OpenAI(api_key=load_api_key())
+
+client = OpenAI(api_key=load_api_key(), http_client=httpx.Client(verify=r"C:\Users\bishes\Downloads\jea_root.pem.cer"))
 
 
 def encode_image(image_bytes: bytes) -> str:

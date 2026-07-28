@@ -1,19 +1,17 @@
-from starlette.templating import _TemplateResponse
 from typing import Annotated, TypedDict
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
-from src.core.operations import get_db
-from src.core.schema import (
-    HVACAnalysis,
+
+from src.core.database import get_db
+from src.core.models import (
     HVACSubmission,
-    WaterHeaterAnalysis,
     WaterHeaterSubmission,
 )
 
 DbSession = Annotated[Session, Depends(get_db)]
 
-templates = Jinja2Templates(directory="src/templates")
+templates = Jinja2Templates(directory="frontend/templates")
 
 report_router = APIRouter(
     prefix="/report",
@@ -23,6 +21,7 @@ report_router = APIRouter(
 
 class ReportRow(TypedDict):
     id: str
+    batch_id: str
     appliance_type: str
     address: str
     appliance_number: int
@@ -48,6 +47,7 @@ def build_report_rows(db: Session) -> list[ReportRow]:
 
         row: ReportRow = {
             "id": submission.id,
+            "batch_id": submission.batch_id,
             "appliance_type": "HVAC",
             "address": submission.address,
             "appliance_number": submission.appliance_number,
@@ -72,7 +72,11 @@ def build_report_rows(db: Session) -> list[ReportRow]:
                 if analysis
                 else None
             ),
-            "analysis_complete": analysis is not None,
+            "analysis_complete": (
+                bool(analysis.analysis_complete)
+                if analysis
+                else False
+            ),
         }
 
         rows.append(row)
@@ -86,6 +90,7 @@ def build_report_rows(db: Session) -> list[ReportRow]:
 
         row: ReportRow = {
             "id": submission.id,
+            "batch_id": submission.batch_id,
             "appliance_type": "Water Heater",
             "address": submission.address,
             "appliance_number": submission.appliance_number,
@@ -110,7 +115,11 @@ def build_report_rows(db: Session) -> list[ReportRow]:
                 if analysis
                 else None
             ),
-            "analysis_complete": analysis is not None,
+            "analysis_complete": (
+                bool(analysis.analysis_complete)
+                if analysis
+                else False
+            ),
         }
 
         rows.append(row)
@@ -118,76 +127,99 @@ def build_report_rows(db: Session) -> list[ReportRow]:
     return rows
 
 
+@report_router.get("/status")
+def get_report_status(
+    batch_id: str,
+    db: DbSession,
+):
+    hvac_submissions = (
+        db.query(HVACSubmission)
+        .filter(
+            HVACSubmission.batch_id == batch_id
+        )
+        .all()
+    )
+
+    water_heater_submissions = (
+        db.query(WaterHeaterSubmission)
+        .filter(
+            WaterHeaterSubmission.batch_id == batch_id
+        )
+        .all()
+    )
+
+    submissions = [
+        *hvac_submissions,
+        *water_heater_submissions,
+    ]
+
+    if not submissions:
+        return {
+            "found": False,
+            "complete": False,
+            "completed": 0,
+            "total": 0,
+        }
+
+    completed_count = 0
+
+    for submission in submissions:
+        analysis = submission.analysis
+
+        if (
+            analysis is not None
+        ):
+            completed_count += 1
+
+    total_count = len(submissions)
+
+    return {
+        "found": True,
+        "complete": (
+            completed_count == total_count
+        ),
+        "completed": completed_count,
+        "total": total_count,
+    }
+
+
 @report_router.get("/")
 def get_report_page(
     request: Request,
     address: str,
     db: DbSession,
+    batch_id: str | None = None,
 ):
-    """_summary_
+    normalized_address = (
+        address.strip().lower()
+    )
 
-    Args:
-        request (Request): _description_
-        address (str): _description_
-        db (DbSession): _description_
-
-    Returns:
-        _type_: _description_
-    """
     all_rows = build_report_rows(db)
 
-    normalized_address = address.strip().lower()
-
     report_rows = [
-        row for row in all_rows
-        if row["address"].strip().lower() == normalized_address
+        row
+        for row in all_rows
+        if (
+            row["address"].strip().lower()
+            == normalized_address
+        )
     ]
 
-    return templates.TemplateResponse(
-        request=request,
-        name="report.html",
-        context={
-            "address": address,
-            "appliances": report_rows,
-        },
-    )
-
-
-@report_router.get("")
-def show_report(
-    request: Request,
-    address: str,
-    batch_id: str | None = None,
-    completed: bool = False,
-    db: Session = Depends(get_db),
-):
-    hvac_query = db.query(HVACSubmission).filter(
-        HVACSubmission.address == address
-    )
-
-    water_heater_query = db.query(
-        WaterHeaterSubmission
-    ).filter(
-        WaterHeaterSubmission.address == address
-    )
-
     if batch_id:
-        hvac_query = hvac_query.filter(
-            HVACSubmission.batch_id == batch_id
+        current_batch_rows = [
+            row
+            for row in report_rows
+            if row["batch_id"] == batch_id
+        ]
+    else:
+        current_batch_rows = report_rows
+
+    all_complete = (
+        bool(current_batch_rows)
+        and all(
+            row["analysis_complete"]
+            for row in current_batch_rows
         )
-
-        water_heater_query = water_heater_query.filter(
-            WaterHeaterSubmission.batch_id == batch_id
-        )
-
-    hvac_submissions = hvac_query.all()
-    water_heater_submissions = water_heater_query.all()
-
-    rows: list[ReportRow] = build_report_rows(db)
-
-    all_complete = bool(rows) and all(
-        row["analysis_complete"]
-        for row in rows
     )
 
     return templates.TemplateResponse(
@@ -195,8 +227,8 @@ def show_report(
         name="report.html",
         context={
             "address": address,
-            "batch_id": batch_id,
-            "rows": rows,
+            "rows": report_rows,
             "all_complete": all_complete,
+            "batch_id": batch_id,
         },
     )

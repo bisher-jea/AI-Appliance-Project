@@ -77,6 +77,10 @@ class HVACAnalysis(Base):
     review_reason: Mapped[str | None] = mapped_column(
         nullable=True,
     )
+    analysis_complete: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
 
 
 class WaterHeaterAnalysis(Base):
@@ -106,6 +110,10 @@ class WaterHeaterAnalysis(Base):
     )
     review_reason: Mapped[str | None] = mapped_column(
         nullable=True,
+    )
+    analysis_complete: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
     )
 
 

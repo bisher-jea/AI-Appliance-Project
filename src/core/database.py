@@ -3,37 +3,38 @@ from sqlalchemy import create_engine, Engine
 from dotenv import load_dotenv  # loads env
 import os
 from collections.abc import Generator
-from .schema import Base
-from sqlalchemy.pool import NullPool
+from .models import Base
 
 # Import every model so SQLAlchemy registers the tables on Base.metadata.
 
 # Importing the models ensures they are registered with Base.metadata.
-from .schema import (
-    HVACAnalysis,
-    HVACSubmission,
-    WaterHeaterAnalysis,
-    WaterHeaterSubmission,
-)
 
 load_dotenv()
 
 
-DATABASE_URL = os.environ["DATABASE_URL"]
-
-ENGINE: Engine = create_engine(
-    DATABASE_URL,
-    poolclass=NullPool,
-    pool_pre_ping=True,
-    connect_args={
-        "connect_timeout": 10,
-        "sslmode": "require",
-        "prepare_threshold": None,
-    },
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "sqlite:///./applianceiq_local.db",
 )
 
+print("ACTIVE DATABASE URL:", DATABASE_URL)
+
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={
+            "check_same_thread": False,
+            "timeout": 30,
+        },
+    )
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+    )
+
 SessionLocal = sessionmaker(
-    bind=ENGINE,
+    bind=engine,
     autocommit=False,
     autoflush=False,
 )
