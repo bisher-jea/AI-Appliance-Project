@@ -1,3 +1,37 @@
+"""
+This module contains the background processing pipeline for ApplianceIQ.
+
+This module is responsible for:
+
+• Loading the submission from the database
+• Downloading the uploaded nameplate image
+• Running OCR
+• Calling appliance-specific age decoders
+• Calling appliance-specific recommendation logic
+• Saving analysis results
+• Managing database commits and rollbacks
+• Logging processing failures
+
+If any step fails:
+
+    • database transaction is rolled back
+    • error is logged
+    • database session is closed
+This prevents partially processed submissions from being saved.
+
+Adding New Appliance Types
+--------------------------
+To support another appliance (for example boilers or generators),
+create another processing function following the same pattern:
+
+    1. Load submission
+    2. Download image
+    3. Run OCR
+    4. Decode age
+    5. Generate recommendation
+    6. Save analysis
+    7. Commit transaction
+"""
 
 from sqlalchemy.orm import Session
 

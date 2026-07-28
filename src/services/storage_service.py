@@ -1,3 +1,46 @@
+"""
+This module manages all appliance nameplate image storage for ApplianceIQ.
+
+Rather than allowing the rest of the application to interact directly with
+the filesystem, every upload, download, lookup, and deletion of nameplate
+images passes through this service.
+
+The storage location is configured using the UPLOAD_DIRECTORY environment
+variable, allowing the application to switch storage providers without
+changing the rest of the codebase.
+
+Database records do not store absolute file paths. Instead, they store
+relative object paths such as:
+
+    hvac/
+        <submission-id>/
+            <generated-file>.jpg
+
+or
+
+    water_heater/
+        <submission-id>/
+            <generated-file>.png
+
+When an image is needed, this module combines the relative object path with
+UPLOAD_DIRECTORY to locate the file.
+
+This module is responsible for:
+
+• Validating uploaded image files
+• Generating unique filenames
+• Organizing uploads by appliance type and submission
+• Reading images from storage
+• Returning filesystem paths when needed
+• Deleting uploaded images
+• Preventing directory traversal attacks
+
+This module intentionally contains no OCR logic or database operations.
+It only manages file storage.
+
+The rest of ApplianceIQ should continue calling these same functions without
+needing to know where files are physically stored.
+"""
 import os
 from pathlib import Path
 from uuid import uuid4

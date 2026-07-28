@@ -1,3 +1,48 @@
+"""
+This module is responsible for extracting structured appliance information
+from uploaded nameplate images using the OpenAI Vision API.
+
+The rest of ApplianceIQ never performs OCR directly. Instead, it calls
+`process_nameplate()` with the raw bytes of an uploaded image. This module
+handles:
+
+    1. Loading the OpenAI API key
+    2. Encoding the image into Base64
+    3. Sending the image to GPT Vision
+    4. Prompting the model to extract appliance information
+    5. Parsing the JSON response
+    6. Returning strongly typed data to the caller
+
+The returned NameplateFields object is then used by the appliance-specific
+analysis services to determine equipment age, replacement recommendations,
+and whether a human review is required.
+
+Workflow
+--------
+Uploaded image
+        │
+        ▼
+process_nameplate(image_bytes)
+        │
+        ▼
+encode_image()
+        │
+        ▼
+GPT Vision API
+        │
+        ▼
+Structured JSON response
+        │
+        ▼
+NameplateFields dataclass
+        │
+        ▼
+HVAC / Water Heater analysis services
+
+This module intentionally contains no business logic such as equipment age
+decoding or replacement recommendations. Its only responsibility is OCR and
+field extraction.
+"""
 from openai import OpenAI
 from dataclasses import dataclass
 import base64

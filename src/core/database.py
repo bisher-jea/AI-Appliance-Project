@@ -17,7 +17,6 @@ DATABASE_URL = os.getenv(
     "sqlite:///./applianceiq_local.db",
 )
 
-print("ACTIVE DATABASE URL:", DATABASE_URL)
 
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(
