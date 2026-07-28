@@ -1,3 +1,8 @@
+"""
+Each appliance has 2 tables: submission and analysis.
+The submission table contains just information gathered during the form submission
+The analysis table is the container of all the OCR extracted data. 
+"""
 from __future__ import annotations
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
 from sqlalchemy import ForeignKey
@@ -115,6 +120,9 @@ class WaterHeaterAnalysis(Base):
         default=False,
         nullable=False,
     )
+
+# ---------------------------------------------------------------------------------------------------
+# You can ignore these, theyre from a version of tghe app with the dashboard implemented 
 
 
 class Profile(Base):

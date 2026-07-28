@@ -5,9 +5,6 @@ import os
 from collections.abc import Generator
 from .models import Base
 
-# Import every model so SQLAlchemy registers the tables on Base.metadata.
-
-# Importing the models ensures they are registered with Base.metadata.
 
 load_dotenv()
 
@@ -39,7 +36,7 @@ SessionLocal = sessionmaker(
 )
 
 
-# Creates tables
+# Creates tables, added some debugging text
 def init_tables(engine: Engine) -> None:
     print("Tables found:", list(Base.metadata.tables.keys()))
     print("Creating tables...")

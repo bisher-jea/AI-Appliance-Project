@@ -126,15 +126,5 @@ machineForm.addEventListener(
             submitButton.disabled = true;
         }
 
-        /*
-         * Do not call event.preventDefault().
-         *
-         * The browser submits the form directly to
-         * FastAPI and follows the RedirectResponse
-         * returned by the backend.
-         *
-         * That redirect should include both address
-         * and batch_id in the report URL.
-         */
     }
 );
