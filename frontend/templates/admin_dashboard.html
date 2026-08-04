@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ApplianceIQ Admin Dashboard</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Michroma&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="/static/admin_dashboard.css"
+    >
+</head>
+
+<body>
+    <main class="dashboard-page">
+        <div class="dashboard-container">
+
+            <!-- Dashboard header -->
+            <header class="dashboard-header">
+                <div class="dashboard-heading">
+                    <p class="dashboard-label">
+                        INTERNAL APPLIANCE REVIEW
+                    </p>
+
+                    <h1>ApplianceIQ Dashboard</h1>
+
+                    <p class="dashboard-user">
+                        Signed in as
+                        {{ dashboard_email or request.session.get("dashboard_email", "") }}
+                    </p>
+                </div>
+
+                <div class="dashboard-header-actions">
+                    <a
+                        href="/"
+                        class="dashboard-button dashboard-button-secondary"
+                    >
+                        Home
+                    </a>
+
+                    <form
+                        method="post"
+                        action="/admin/logout"
+                        class="logout-form"
+                    >
+                        <button
+                            type="submit"
+                            class="dashboard-button dashboard-button-primary"
+                        >
+                            Log Out
+                        </button>
+                    </form>
+                </div>
+            </header>
+
+            <!-- Success message -->
+            {% if saved %}
+                <div
+                    class="saved-message"
+                    role="status"
+                >
+                    Record updated successfully.
+                </div>
+            {% endif %}
+
+            {% if deleted %}
+                <div
+                    class="saved-message"
+                    role="status"
+                >
+                    Record deleted successfully.
+                </div>
+            {% endif %}
+
+            <!-- Error message -->
+            {% if error %}
+                <div
+                    class="error-message"
+                    role="alert"
+                >
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <!-- Dashboard summary -->
+            <section
+                class="dashboard-summary"
+                aria-label="Dashboard summary"
+            >
+                <div class="summary-card">
+                    <span>Total Records</span>
+
+                    <strong>
+                        {{ total_records or 0 }}
+                    </strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Analysis Complete</span>
+
+                    <strong>
+                        {{ complete_count or 0 }}
+                    </strong>
+                </div>
+
+                <div class="summary-card">
+                    <span>Needs Review</span>
+
+                    <strong>
+                        {{ review_count or 0 }}
+                    </strong>
+                </div>
+            </section>
+
+            <!-- Search and filters -->
+            <form
+                method="get"
+                action="/admin/dashboard"
+                class="dashboard-filters"
+            >
+                <div class="filter-search">
+                    <label for="search">
+                        Search records
+                    </label>
+
+                    <input
+                        type="search"
+                        id="search"
+                        name="search"
+                        value="{{ search or '' }}"
+                        placeholder="Address, brand, model, or serial"
+                    >
+                </div>
+
+                <label class="review-filter">
+                    <input
+                        type="checkbox"
+                        name="needs_review"
+                        value="true"
+                        {% if needs_review_filter %}checked{% endif %}
+                    >
+
+                    <span>Needs review only</span>
+                </label>
+
+                <button
+                    type="submit"
+                    class="dashboard-button dashboard-button-primary"
+                >
+                    Apply Filters
+                </button>
+
+                <a
+                    href="/admin/dashboard"
+                    class="dashboard-button dashboard-button-secondary"
+                >
+                    Clear
+                </a>
+            </form>
+
+            <!-- Dashboard records -->
+            {% if rows %}
+                <section
+                    class="dashboard-grid"
+                    aria-label="Appliance submissions"
+                >
+                    {% for row in rows %}
+                        <article class="dashboard-card">
+
+                            <!-- Record heading -->
+                            <header class="record-header">
+                                <div class="record-heading">
+                                    <p class="record-type">
+                                        {{ row.appliance_type_label or row.appliance_type }}
+                                    </p>
+
+                                    <h2>
+                                        {{ row.address or "Address unavailable" }}
+                                    </h2>
+
+                                    <p class="record-number">
+                                        Appliance
+                                        {{ row.appliance_number or loop.index }}
+                                    </p>
+                                </div>
+
+                                {% if row.needs_human_review %}
+                                    <span class="review-badge">
+                                        Needs Review
+                                    </span>
+                                {% else %}
+                                    <span class="complete-badge">
+                                        Reviewed
+                                    </span>
+                                {% endif %}
+                            </header>
+
+                            <!-- Nameplate photo -->
+                            <div class="dashboard-photo-container">
+                                {% if row.nameplate_photo %}
+                                    <img
+                                        src="/uploads/{{ row.nameplate_photo }}"
+                                        alt="Nameplate for {{ row.appliance_type_label or row.appliance_type }}"
+                                        class="dashboard-photo"
+                                        loading="lazy"
+                                    >
+                                {% else %}
+                                    <p class="photo-placeholder">
+                                        No image available
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <form
+                                method="post"
+                                action="/admin/dashboard/update"
+                                class="dashboard-edit-form"
+                            >
+                                <!-- Required record identifiers -->
+                                <input
+                                    type="hidden"
+                                    name="appliance_type"
+                                    value="{{ row.appliance_type }}"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="submission_id"
+                                    value="{{ row.submission_id }}"
+                                >
+
+                                <div class="dashboard-fields">
+
+                                    <!-- Brand -->
+                                    <div class="dashboard-field">
+                                        <label for="brand-{{ row.submission_id or row.id }}">
+                                            Brand
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="brand-{{ row.submission_id or row.id }}"
+                                            name="brand"
+                                            value="{{ row.brand or '' }}"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <!-- Subtype -->
+                                    <div class="dashboard-field">
+                                        <label for="subtype-{{ row.submission_id or row.id }}">
+                                            Subtype
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="subtype-{{ row.submission_id or row.id }}"
+                                            name="subtype"
+                                            value="{{ row.subtype or '' }}"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <!-- Model number -->
+                                    <div class="dashboard-field">
+                                        <label for="model-{{ row.submission_id or row.id }}">
+                                            Model Number
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="model-{{ row.submission_id or row.id }}"
+                                            name="model_number"
+                                            value="{{ row.model_number or '' }}"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <!-- Serial number -->
+                                    <div class="dashboard-field">
+                                        <label for="serial-{{ row.submission_id or row.id }}">
+                                            Serial Number
+                                        </label>
+
+                                        <input
+                                            type="text"
+                                            id="serial-{{ row.submission_id or row.id }}"
+                                            name="serial_number"
+                                            value="{{ row.serial_number or '' }}"
+                                            autocomplete="off"
+                                        >
+                                    </div>
+
+                                    <!-- Age -->
+                                    <div class="dashboard-field">
+                                        <label for="age-{{ row.submission_id or row.id }}">
+                                            Age
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            id="age-{{ row.submission_id or row.id }}"
+                                            name="age"
+                                            min="0"
+                                            max="200"
+                                            value="{% if row.age is not none %}{{ row.age }}{% endif %}"
+                                        >
+                                    </div>
+
+                                    <!-- Recommendation -->
+                                    <div class="dashboard-field">
+                                        <label for="recommendation-{{ row.submission_id or row.id }}">
+                                            Recommendation
+                                        </label>
+
+                                        <select
+                                            id="recommendation-{{ row.submission_id or row.id }}"
+                                            name="replacement_recommendation"
+                                        >
+                                            <option
+                                                value=""
+                                                {% if not row.replacement_recommendation %}selected{% endif %}
+                                            >
+                                                Select recommendation
+                                            </option>
+
+                                            <option
+                                                value="No replacement needed"
+                                                {% if row.replacement_recommendation == "No replacement needed" %}selected{% endif %}
+                                            >
+                                                No replacement needed
+                                            </option>
+
+                                            <option
+                                                value="Monitor"
+                                                {% if row.replacement_recommendation == "Monitor" %}selected{% endif %}
+                                            >
+                                                Monitor
+                                            </option>
+
+                                            <option
+                                                value="Replace"
+                                                {% if row.replacement_recommendation == "Replace" %}selected{% endif %}
+                                            >
+                                                Replace
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Review reason -->
+                                    <div class="dashboard-field full-width">
+                                        <label for="review-reason-{{ row.submission_id or row.id }}">
+                                            Review Reason
+                                        </label>
+
+                                        <textarea
+                                            id="review-reason-{{ row.submission_id or row.id }}"
+                                            name="review_reason"
+                                            rows="3"
+                                            placeholder="Enter the reason this submission requires review"
+                                        >{{ row.review_reason or '' }}</textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Human review checkbox -->
+                                <label class="review-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        name="needs_human_review"
+                                        value="true"
+                                        {% if row.needs_human_review %}checked{% endif %}
+                                    >
+
+                                    <span>
+                                        Needs human review
+                                    </span>
+                                </label>
+
+                                <div class ="dashboard-actions">
+
+                                    <button
+                                        type="submit"
+                                        class="dashboard-button dashboard-button-primary save-button"
+                                    >
+                                        Save Changes
+                                    </button>
+                            </form>
+
+                            <form   
+                                method="post"
+                                action="/admin/dashboard/delete"
+                                class="delete-form"
+                                onsubmit="return confirmDeleteSubmission();"
+                            >
+                            <input 
+                                type="hidden"
+                                name="submission_id"
+                                value="{{ row.submission_id }}"
+                            >
+                            
+                            <input 
+                                type="hidden"
+                                name="appliance_type"
+                                value="{{ row.appliance_type }}"
+                            >
+                        
+                            <button
+                                type="submit"
+                                class="dashboard-button dashboard-button-secondary"
+                            >
+                                Delete submission
+                            </button>
+                        </form>
+                        </article>
+                    {% endfor %}
+                </section>
+            {% else %}
+                <section class="empty-dashboard">
+                    <h2>No records found</h2>
+
+                    <p>
+                        No appliance submissions match the current filters.
+                    </p>
+
+                    <a
+                        href="/admin/dashboard"
+                        class="dashboard-button dashboard-button-primary"
+                    >
+                        View All Records
+                    </a>
+                </section>
+            {% endif %}
+        </div>
+    </main>
+<script>
+    function confirmDeleteSubmission() {
+        return window.(
+            "Delete this submission? This cannot be undone."
+        );
+    }
+</script>
+</body>
+
+</html>

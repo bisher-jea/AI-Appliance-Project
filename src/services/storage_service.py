@@ -51,7 +51,7 @@ from fastapi import UploadFile
 UPLOAD_DIRECTORY = Path(
     os.getenv(
         "UPLOAD_DIRECTORY",
-        r"G:/Customer Relationship/Customer Analytics/Ella/uploads",
+        r"C:\Users\bishes\Downloads\applianceIQ\uploads",
     )
 ).resolve()
 

@@ -1,12 +1,23 @@
+import os
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy import create_engine, Engine
 from dotenv import load_dotenv  # loads env
-import os
 from collections.abc import Generator
 from .models import Base
 
 
 load_dotenv()
+
+
+# seems uncessesary but ensures sqlalchemy gets all tables
+from src.core.models import (
+    DashboardAccessLog,
+    DashboardActivityLog,
+    HVACAnalysis,
+    HVACSubmission,
+    WaterHeaterAnalysis,
+    WaterHeaterSubmission,
+)
 
 
 DATABASE_URL = os.getenv(

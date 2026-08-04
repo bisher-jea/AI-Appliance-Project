@@ -3,54 +3,80 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>ApplianceIQ Login</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ApplianceIQ Admin Login</title>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Michroma&family=Inter:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Michroma&display=swap"
         rel="stylesheet"
     >
 
-    <link rel="stylesheet" href="./static/admin_login.css">
+    <link
+        rel="stylesheet"
+        href="/static/admin_login.css"
+    >
 </head>
 
 <body>
-    <div class="login-page">
+    <main class="login-page">
+        <section class="login-card">
+            <h1>ApplianceIQ</h1>
 
-        <div class="login-card">
-            <h1>Admin Login</h1>
+            <p class="login-description">
+                Enter your JEA email address to access the internal
+                appliance review dashboard.
+            </p>
 
-            <form id="loginForm">
+            <form
+                method="post"
+                action="/admin/login"
+                class="login-form"
+            >
+                <label for="email">
+                    JEA Email Address
+                </label>
+
                 <input
                     type="email"
                     id="email"
-                    placeholder="Email"
+                    name="email"
+                    value="{{ entered_email }}"
+                    placeholder="name@jea.com"
+                    autocomplete="email"
                     required
                 >
 
-                <input
-                    type="password"
-                    id="password"
-                    placeholder="Password"
-                    required
-                >
+                {% if error %}
+                    <div class="login-error">
+                        {{ error }}
+                    </div>
+                {% endif %}
 
-                <button type="submit" class="login-btn">
-                    Login
+                <button
+                    type="submit"
+                    class="login-btn"
+                >
+                    Access Dashboard
                 </button>
-
-                <p id="loginError"></p>
             </form>
-        </div>
 
-        <a href="./index.html" class="back-btn">
-            ← Back to ApplianceIQ
-        </a>
+            <a
+                href="/"
+                class="back-btn"
+            >
+                Back to ApplianceIQ
+            </a>
 
-    </div>
-
-    <script type="module" src="./static/admin_login.js?v=3"></script>
+            <p class="login-note">
+                Access is limited to valid @jea.com email addresses.
+            </p>
+        </section>
+    </main>
 </body>
 
 </html>

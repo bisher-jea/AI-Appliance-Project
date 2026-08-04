@@ -1,16 +1,18 @@
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles    # serve uploaded image files
 from fastapi.templating import Jinja2Templates
-import os
+from pathlib import Path
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from .core.database import engine, init_tables
 from .routers.hvac_router import hvac_router
 from .routers.water_heater_router import water_heater_router
 from .routers.report_router import report_router
-from pathlib import Path
+from .routers.admin_router import admin_router
 
 
 load_dotenv()
@@ -33,12 +35,24 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.getenv(
+        "SESSION_SECRET_KEY",
+        "development-secret-change-this",
+    ),
+    session_cookie="applianceiq_dashboard_session",
+    max_age=60 * 60 * 8,
+    same_site="lax",
+    https_only=False,
+)
+
 templates = Jinja2Templates(directory="frontend/templates")
 
 UPLOAD_DIRECTORY = Path(
     os.getenv(
         "UPLOAD_DIRECTORY",
-        r"G:/Customer Relationship/Customer Analytics/Ella/uploads",
+        r"C:\Users\bishes\Downloads\applianceIQ\uploads",
     )
 ).resolve()
 
@@ -55,6 +69,7 @@ app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 app.include_router(router=hvac_router)
 app.include_router(router=water_heater_router)
 app.include_router(router=report_router)
+app.include_router(admin_router)
 
 
 @app.get("/", response_class=HTMLResponse)

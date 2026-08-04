@@ -5,10 +5,10 @@ The analysis table is the container of all the OCR extracted data.
 """
 from __future__ import annotations
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, DateTime, String
 from uuid import uuid4
 from typing import ClassVar
-from datetime import datetime, UTC
+from datetime import datetime, timezone
 
 
 # parent base class, used to track all models
@@ -121,62 +121,56 @@ class WaterHeaterAnalysis(Base):
         nullable=False,
     )
 
-# ---------------------------------------------------------------------------------------------------
-# You can ignore these, theyre from a version of tghe app with the dashboard implemented 
 
-
-class Profile(Base):
-    __tablename__ = "profiles"
+class DashboardAccessLog(Base):
+    __tablename__: ClassVar[str] = "dashboard_access_logs"
 
     id: Mapped[str] = mapped_column(
-        primary_key=True
-    )
-
-    email: Mapped[str] = mapped_column(
-        nullable=False,
-        unique=True
-    )
-
-    role: Mapped[str] = mapped_column(
-        nullable=False,
-        default="viewer"
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(UTC)
-    )
-
-
-class ReviewLog(Base):
-    __tablename__ = "review_log"
-
-    id: Mapped[str] = mapped_column(
+        String,
         primary_key=True,
         default=lambda: str(uuid4()),
     )
 
-    submission_id: Mapped[str] = mapped_column(
+    email: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        index=True,
+    )
+
+    accessed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+
+class DashboardActivityLog(Base):
+    __tablename__ = "dashboard_activity_logs"
+
+    id = mapped_column(
+        String,
+        primary_key=True,
+        default=lambda: str(uuid4()),
+    )
+
+    email = mapped_column(
+        String,
+        nullable=False,
+        index=True,
+    )
+
+    action = mapped_column(
+        String,
         nullable=False,
     )
 
-    submission_type: Mapped[str] = mapped_column(
+    submission_id = mapped_column(
+        String,
+        nullable=True,
+    )
+
+    timestamp = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
         nullable=False,
-    )
-
-    review_status: Mapped[str] = mapped_column(
-        default="pending",
-        nullable=False,
-    )
-
-    reviewed_by: Mapped[str | None] = mapped_column(
-        ForeignKey("profiles.id"),
-        nullable=True,
-    )
-
-    reviewed_at: Mapped[datetime | None] = mapped_column(
-        nullable=True,
-    )
-
-    review_notes: Mapped[str | None] = mapped_column(
-        nullable=True,
     )
