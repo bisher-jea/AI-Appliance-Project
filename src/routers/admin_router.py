@@ -567,7 +567,7 @@ def delete_dashboard_record(
             DashboardActivityLog(
                 email=dashboard_email,
                 action=f"deleted {normalized_type} submission",
-                submiDssion_id=submission_id,
+                submission_id=submission_id,
             )
         )
 
